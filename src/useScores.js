@@ -85,17 +85,14 @@ export function useScores() {
         const homeScore = parseInt(home.score ?? 0);
         const awayScore = parseInt(away.score ?? 0);
         const statusName = comp.status?.type?.name || "";
-        const statusDesc = comp.status?.type?.description || "";
+        const state = comp.status?.type?.state || "";
         const clock = comp.status?.displayClock || "";
-        const period = comp.status?.period || 0;
 
-        const isLive = statusName === "STATUS_IN_PROGRESS";
-        const isFinal = [
-          "STATUS_FULL_TIME",
-          "STATUS_FINAL",
-          "STATUS_FINAL_PEN",
-          "STATUS_FINAL_AET",
-        ].includes(statusName);
+        // ESPN state is the robust signal: pre | in | post.
+        // statusName has per-period values (STATUS_FIRST_HALF, STATUS_SECOND_HALF,
+        // STATUS_HALFTIME, STATUS_IN_PROGRESS...) so name-matching misses live games.
+        const isLive = state === "in";
+        const isFinal = state === "post";
         const isPens = statusName === "STATUS_FINAL_PEN";
         const isAET = statusName === "STATUS_FINAL_AET";
 
