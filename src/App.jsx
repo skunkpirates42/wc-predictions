@@ -118,6 +118,112 @@ const s = {
   }),
 };
 
+function PlayerDrawer({ player, me, results, matches, onClose, comparing, setComparing }) {
+  if (!player) return null;
+  return (
+    <div style={{
+      position: 'fixed', inset: 0, zIndex: 100,
+      display: 'flex', flexDirection: 'column', justifyContent: 'flex-end',
+    }}>
+      {/* backdrop */}
+      <div onClick={onClose} style={{ position: 'absolute', inset: 0, background: 'rgba(0,0,0,0.4)' }} />
+
+      {/* panel */}
+      <div style={{
+        position: 'relative', background: 'white', borderRadius: '16px 16px 0 0',
+        padding: '1.25rem', maxHeight: '80vh', overflowY: 'auto', zIndex: 1,
+      }}>
+        {/* header */}
+        <div style={{ display: 'flex', alignItems: 'center', marginBottom: 16, gap: 10 }}>
+          <div style={{ flex: 1 }}>
+            <div style={{ fontSize: 16, fontWeight: 600 }}>{player.name}</div>
+            <div style={{ fontSize: 12, color: '#888' }}>{player.pts} pts</div>
+          </div>
+          {me && player.name !== me.name && (
+            <button onClick={() => setComparing(c => !c)} style={{
+              fontSize: 12, padding: '5px 12px', borderRadius: 8,
+              border: comparing ? '2px solid #222' : '1px solid #ccc',
+              background: comparing ? '#222' : 'white',
+              color: comparing ? 'white' : '#333',
+              cursor: 'pointer', fontWeight: comparing ? 600 : 400,
+            }}>
+              {comparing ? 'Comparing' : 'Compare with me'}
+            </button>
+          )}
+          <button onClick={onClose} style={{
+            fontSize: 18, background: 'none', border: 'none',
+            cursor: 'pointer', color: '#888', padding: '0 4px',
+          }}>✕</button>
+        </div>
+
+        {/* column headers when comparing */}
+        {comparing && me && (
+          <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr 1fr', gap: 4, marginBottom: 6 }}>
+            <div style={{ fontSize: 11, color: '#888' }}>Match</div>
+            <div style={{ fontSize: 11, color: '#888', textAlign: 'center' }}>{player.name.split(' ')[0]}</div>
+            <div style={{ fontSize: 11, color: '#888', textAlign: 'center' }}>{me.name.split(' ')[0]} (you)</div>
+          </div>
+        )}
+
+        {/* picks list */}
+        {matches.map((m, i) => {
+          const pick = player.picks[i];
+          const mePick = me?.picks[i];
+          const result = results[i]?.winner;
+          const pickCorrect = pick && result && pick === result;
+          const pickWrong = pick && result && pick !== result;
+          const meCorrect = mePick && result && mePick === result;
+          const meWrong = mePick && result && mePick !== result;
+          const agree = pick && mePick && pick === mePick;
+
+          if (comparing && me && player.name !== me.name) {
+            return (
+              <div key={m.id} style={{
+                display: 'grid', gridTemplateColumns: '1fr 1fr 1fr',
+                gap: 4, padding: '7px 0',
+                borderBottom: '0.5px solid #f0f0f0',
+              }}>
+                <div style={{ fontSize: 12, color: '#666' }}>{m.label}</div>
+                <div style={{
+                  fontSize: 12, textAlign: 'center', fontWeight: 500,
+                  color: pickCorrect ? '#3b6d11' : pickWrong ? '#a32d2d' : '#333',
+                }}>
+                  {pick || '—'} {pickCorrect ? '✓' : pickWrong ? '✗' : ''}
+                </div>
+                <div style={{
+                  fontSize: 12, textAlign: 'center', fontWeight: 500,
+                  color: meCorrect ? '#3b6d11' : meWrong ? '#a32d2d' : '#333',
+                  background: agree ? '#fffbe6' : 'transparent',
+                  borderRadius: 4,
+                }}>
+                  {mePick || '—'} {meCorrect ? '✓' : meWrong ? '✗' : ''}
+                </div>
+              </div>
+            );
+          }
+
+          return (
+            <div key={m.id} style={{
+              display: 'flex', alignItems: 'center', gap: 8,
+              padding: '7px 10px', marginBottom: 4, borderRadius: 8,
+              background: pickCorrect ? '#eaf3de' : pickWrong ? '#fcebeb' : '#fafafa',
+            }}>
+              <span style={{ fontSize: 12, color: '#666', flex: 1 }}>{m.label}</span>
+              <span style={{ fontSize: 12, fontWeight: 500 }}>{pick || '—'}</span>
+              {result && (
+                <span style={{ fontSize: 13, fontWeight: 'bold', color: pickCorrect ? '#3b6d11' : '#a32d2d' }}>
+                  {pickCorrect ? '✓' : '✗'}
+                </span>
+              )}
+              {!result && <span style={{ fontSize: 11, color: '#ccc' }}>pending</span>}
+            </div>
+          );
+        })}
+      </div>
+    </div>
+  );
+}
+
 function LiveDot() {
   return (
     <span
@@ -139,6 +245,8 @@ export default function App() {
     () => localStorage.getItem("wc_user") || null,
   );
   const [tab, setTab] = useState("leaderboard");
+  const [selectedPlayer, setSelectedPlayer] = useState(null);
+  const [comparing, setComparing] = useState(false);
   const {
     results,
     liveScores,
@@ -270,7 +378,14 @@ export default function App() {
               (pk, j) => pk && results[j]?.winner && pk === results[j].winner,
             ).length;
             return (
-              <div key={p.name} style={s.row(isMe, i)}>
+              <div
+                key={p.name}
+                style={{ ...s.row(isMe, i), cursor: "pointer" }}
+                onClick={() => {
+                  setSelectedPlayer(p);
+                  setComparing(false);
+                }}
+              >
                 <span
                   style={{
                     fontSize: 13,
@@ -447,6 +562,19 @@ export default function App() {
           })}
         </div>
       )}
+
+      <PlayerDrawer
+        player={selectedPlayer}
+        me={me}
+        results={results}
+        matches={MATCHES}
+        onClose={() => {
+          setSelectedPlayer(null);
+          setComparing(false);
+        }}
+        comparing={comparing}
+        setComparing={setComparing}
+      />
     </div>
   );
 }
