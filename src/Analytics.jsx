@@ -1,4 +1,4 @@
-import { useState } from "react";
+import { useState, useMemo } from "react";
 import { buildTimeline, accuracyByRound } from "./analytics.js";
 
 // Validated 8-slot categorical palette (light). You is drawn in ink (focus), not
@@ -246,8 +246,15 @@ function BreakdownChart({ you, participants }) {
 }
 
 export default function Analytics({ participants, ranked, myName, results, groupStandings }) {
-  const { dates, series } = buildTimeline(participants, results, groupStandings);
+  const { dates, series } = useMemo(
+    () => buildTimeline(participants, results, groupStandings),
+    [participants, results, groupStandings],
+  );
   const me = ranked.find((p) => p.name === myName);
+  const acc = useMemo(
+    () => (me ? accuracyByRound(me, participants, results, groupStandings) : null),
+    [me, participants, results, groupStandings],
+  );
 
   if (!dates.length) {
     return (
@@ -268,8 +275,6 @@ export default function Analytics({ participants, ranked, myName, results, group
       return s ? { ...s, color: HUES[i % HUES.length] } : null;
     })
     .filter(Boolean);
-
-  const acc = me ? accuracyByRound(me, participants, results, groupStandings) : null;
 
   return (
     <div>

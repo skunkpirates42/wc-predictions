@@ -16,6 +16,8 @@ export const MATCHES = [
   { id: 14, label: "Colombia vs Ghana", t1: "Colombia", t2: "Ghana" },
 ];
 
+export const GROUP_LETTERS = ["A", "B", "C", "D", "E", "F", "G", "H", "I", "J", "K", "L"];
+
 export const GROUPS = {
   A: ["Mexico", "Korea Republic", "Czechia", "South Africa"],
   B: ["Canada", "Switzerland", "Bosnia", "Qatar"],

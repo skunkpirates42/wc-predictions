@@ -38,20 +38,26 @@ Scoring lives in `src/scoring.js` (pure functions, easy to change).
 
 ```
 wc-predictions/
-├── api/scores.js        # Vercel function — optional ESPN proxy (see note below)
 ├── src/
-│   ├── App.jsx          # UI: tabs, leaderboard, picks, results, player drawer
+│   ├── App.jsx          # UI shell: tabs, leaderboard, my picks, results
+│   ├── PlayerDrawer.jsx # per-player picks drawer + compare mode
+│   ├── GroupViews.jsx   # group standings + group picks views
 │   ├── Analytics.jsx    # Analytics tab — inline-SVG charts (no chart lib)
 │   ├── analytics.js     # buildTimeline() + accuracyByRound() (pure)
 │   ├── scoring.js       # scoreR32 / scoreGroups / scoreTotal (pure)
-│   ├── useScores.js     # ESPN fetch, live detection, computeStandings()
+│   ├── standings.js     # ESPN name-matching + computeStandings() (pure)
+│   ├── useScores.js     # ESPN fetch hook + live detection
 │   ├── data.js          # MATCHES, GROUPS, FLAGS, PARTICIPANTS (picks)
+│   ├── styles.js        # shared inline-style objects
+│   ├── *.test.js        # node:test unit tests (scoring, standings, analytics)
 │   ├── main.jsx         # React entry
 │   └── index.css        # global reset
 ├── index.html
-├── vite.config.js
-└── vercel.json
+└── vite.config.js
 ```
+
+Pure logic (`scoring.js`, `standings.js`, `analytics.js`) is kept free of React so
+it's unit-testable on its own.
 
 ## Data model (`src/data.js`)
 
@@ -86,8 +92,8 @@ and every R32 date (Jun 28–Jul 4), de-dupes by event id, then:
   "Cape Verde" → "Cabo Verde") are handled by `normalize()`.
 
 The browser calls the ESPN API directly — ESPN's public scoreboard endpoint allows
-cross-origin requests, so no proxy is needed. `api/scores.js` remains as an optional
-server-side proxy but is **not** currently wired into the client.
+cross-origin requests, so no proxy is needed. The group stage is finished, so it's
+fetched once and cached; only the R32 dates are re-polled during live refresh.
 
 ## Development
 
@@ -96,6 +102,7 @@ Requires Node 18+.
 ```bash
 npm install
 npm run dev      # http://localhost:5173 — hits ESPN directly, no setup needed
+npm test         # run unit tests (node:test — scoring, standings, analytics)
 npm run build    # production build to dist/
 npm run preview  # serve the built dist/ locally
 ```

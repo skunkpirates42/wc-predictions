@@ -1,0 +1,184 @@
+import { useState } from "react";
+import { FLAGS, GROUP_LETTERS } from "./data.js";
+import { s } from "./styles.js";
+import { GroupPicksView } from "./GroupViews.jsx";
+
+export default function PlayerDrawer({ player, me, results, matches, groupStandings, onClose, comparing, setComparing }) {
+  const [round, setRound] = useState("r32");
+  if (!player) return null;
+  const isOther = me && player.name !== me.name;
+  const showCompare = comparing && isOther;
+  const pGroups = player.picks.groups;
+  const myGroups = me?.picks.groups;
+  // fall back to whichever round the player actually has
+  const activeRound =
+    round === "groups" && !pGroups
+      ? "r32"
+      : round === "r32" && !player.picks.r32
+        ? "groups"
+        : round;
+
+  return (
+    <div style={{
+      position: 'fixed', inset: 0, zIndex: 100,
+      display: 'flex', flexDirection: 'column', justifyContent: 'flex-end',
+    }}>
+      {/* backdrop */}
+      <div onClick={onClose} style={{ position: 'absolute', inset: 0, background: 'rgba(0,0,0,0.4)' }} />
+
+      {/* panel */}
+      <div style={{
+        position: 'relative', background: 'white', borderRadius: '16px 16px 0 0',
+        padding: '1.25rem', maxHeight: '80vh', overflowY: 'auto', zIndex: 1,
+      }}>
+        {/* header */}
+        <div style={{ display: 'flex', alignItems: 'center', marginBottom: 12, gap: 10 }}>
+          <div style={{ flex: 1 }}>
+            <div style={{ fontSize: 16, fontWeight: 600 }}>{player.name}</div>
+            <div style={{ fontSize: 12, color: '#888' }}>
+              {player.pts} pts · G {player.groupPts ?? 0} · R32 {player.r32Pts ?? 0}
+            </div>
+          </div>
+          {isOther && (
+            <button onClick={() => setComparing(c => !c)} style={{
+              fontSize: 12, padding: '5px 12px', borderRadius: 8,
+              border: comparing ? '2px solid #222' : '1px solid #ccc',
+              background: comparing ? '#222' : 'white',
+              color: comparing ? 'white' : '#333',
+              cursor: 'pointer', fontWeight: comparing ? 600 : 400,
+            }}>
+              {comparing ? 'Comparing' : 'Compare with me'}
+            </button>
+          )}
+          <button onClick={onClose} style={{
+            fontSize: 18, background: 'none', border: 'none',
+            cursor: 'pointer', color: '#888', padding: '0 4px',
+          }}>✕</button>
+        </div>
+
+        {/* round selector */}
+        <div style={s.roundTabs}>
+          {[
+            ["groups", "Group Stage", !!pGroups],
+            ["r32", "Round of 32", !!player.picks.r32],
+          ].map(([key, label, enabled]) => (
+            <button
+              key={key}
+              disabled={!enabled}
+              onClick={() => enabled && setRound(key)}
+              style={s.roundTab(activeRound === key, !enabled)}
+            >
+              {label}
+            </button>
+          ))}
+        </div>
+
+        {/* R32 */}
+        {activeRound === "r32" && (
+          <>
+            {showCompare && (
+              <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr 1fr', gap: 4, marginBottom: 6 }}>
+                <div style={{ fontSize: 11, color: '#888' }}>Match</div>
+                <div style={{ fontSize: 11, color: '#888', textAlign: 'center' }}>{player.name.split(' ')[0]}</div>
+                <div style={{ fontSize: 11, color: '#888', textAlign: 'center' }}>{me.name.split(' ')[0]} (you)</div>
+              </div>
+            )}
+            {matches.map((m, i) => {
+              const pick = player.picks.r32?.[i];
+              const mePick = me?.picks.r32?.[i];
+              const result = results[i]?.winner;
+              const pickCorrect = pick && result && pick === result;
+              const pickWrong = pick && result && pick !== result;
+              const meCorrect = mePick && result && mePick === result;
+              const meWrong = mePick && result && mePick !== result;
+              const agree = pick && mePick && pick === mePick;
+
+              if (showCompare) {
+                return (
+                  <div key={m.id} style={{
+                    display: 'grid', gridTemplateColumns: '1fr 1fr 1fr',
+                    gap: 4, padding: '7px 0', borderBottom: '0.5px solid #f0f0f0',
+                  }}>
+                    <div style={{ fontSize: 12, color: '#666' }}>{m.label}</div>
+                    <div style={{ fontSize: 12, textAlign: 'center', fontWeight: 500,
+                      color: pickCorrect ? '#3b6d11' : pickWrong ? '#a32d2d' : '#333' }}>
+                      {pick || '—'} {pickCorrect ? '✓' : pickWrong ? '✗' : ''}
+                    </div>
+                    <div style={{ fontSize: 12, textAlign: 'center', fontWeight: 500,
+                      color: meCorrect ? '#3b6d11' : meWrong ? '#a32d2d' : '#333',
+                      background: agree ? '#fffbe6' : 'transparent', borderRadius: 4 }}>
+                      {mePick || '—'} {meCorrect ? '✓' : meWrong ? '✗' : ''}
+                    </div>
+                  </div>
+                );
+              }
+              return (
+                <div key={m.id} style={{
+                  display: 'flex', alignItems: 'center', gap: 8,
+                  padding: '7px 10px', marginBottom: 4, borderRadius: 8,
+                  background: pickCorrect ? '#eaf3de' : pickWrong ? '#fcebeb' : '#fafafa',
+                }}>
+                  <span style={{ fontSize: 12, color: '#666', flex: 1 }}>{m.label}</span>
+                  <span style={{ fontSize: 12, fontWeight: 500 }}>{pick || '—'}</span>
+                  {result && (
+                    <span style={{ fontSize: 13, fontWeight: 'bold', color: pickCorrect ? '#3b6d11' : '#a32d2d' }}>
+                      {pickCorrect ? '✓' : '✗'}
+                    </span>
+                  )}
+                  {!result && <span style={{ fontSize: 11, color: '#ccc' }}>pending</span>}
+                </div>
+              );
+            })}
+          </>
+        )}
+
+        {/* Groups */}
+        {activeRound === "groups" && !showCompare && (
+          <GroupPicksView groups={pGroups} standings={groupStandings} />
+        )}
+
+        {activeRound === "groups" && showCompare && (
+          <div style={{ display: "grid", gap: 10 }}>
+            {GROUP_LETTERS.map((L) => {
+              const picks = pGroups?.[L];
+              const mine = myGroups?.[L];
+              if (!picks && !mine) return null;
+              const st = groupStandings?.[L];
+              return (
+                <div key={L} style={s.groupCard}>
+                  <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr 1fr', gap: 4, marginBottom: 4 }}>
+                    <div style={s.groupHead}>Group {L}</div>
+                    <div style={{ fontSize: 11, color: '#888', textAlign: 'center' }}>{player.name.split(' ')[0]}</div>
+                    <div style={{ fontSize: 11, color: '#888', textAlign: 'center' }}>{me.name.split(' ')[0]} (you)</div>
+                  </div>
+                  {[0, 1, 2, 3].map((i) => {
+                    const pt = picks?.[i];
+                    const mt = mine?.[i];
+                    const actual = st?.order[i];
+                    const pc = st?.complete && pt && actual === pt;
+                    const pw = st?.complete && pt && actual !== pt;
+                    const mc = st?.complete && mt && actual === mt;
+                    const mw = st?.complete && mt && actual !== mt;
+                    const agree = pt && mt && pt === mt;
+                    return (
+                      <div key={i} style={{ display: 'grid', gridTemplateColumns: '1fr 1fr 1fr', gap: 4, padding: '4px 0' }}>
+                        <div style={{ fontSize: 11, color: '#999' }}>{i + 1}{st?.complete ? ` ${actual}` : ''}</div>
+                        <div style={{ fontSize: 12, textAlign: 'center', color: pc ? '#3b6d11' : pw ? '#a32d2d' : '#333' }}>
+                          {pt || '—'} {pc ? '✓' : pw ? '✗' : ''}
+                        </div>
+                        <div style={{ fontSize: 12, textAlign: 'center', color: mc ? '#3b6d11' : mw ? '#a32d2d' : '#333',
+                          background: agree ? '#fffbe6' : 'transparent', borderRadius: 4 }}>
+                          {mt || '—'} {mc ? '✓' : mw ? '✗' : ''}
+                        </div>
+                      </div>
+                    );
+                  })}
+                </div>
+              );
+            })}
+          </div>
+        )}
+      </div>
+    </div>
+  );
+}
