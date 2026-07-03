@@ -1,16 +1,83 @@
 import { useState, useEffect, useCallback } from "react";
-import { MATCHES } from "./data.js";
+import { MATCHES, GROUPS } from "./data.js";
 
 function normalize(s) {
   if (!s) return "";
   return s
+    .normalize("NFD") // strip accents
+    .replace(/[̀-ͯ]/g, "")
     .toLowerCase()
     .replace("united states", "usa")
     .replace("bosnia-herzegovina", "bosnia")
     .replace("ivory coast", "cote d'ivoire")
     .replace("cape verde", "cabo verde")
+    .replace("czech republic", "czechia")
+    .replace("south korea", "korea republic")
+    .replace("turkiye", "turkey")
     .replace("congo dr", "dr congo")
     .replace(/[^a-z]/g, "");
+}
+
+// Map an ESPN team display name to its canonical GROUPS name, or null.
+const GROUP_TEAM_LOOKUP = {};
+for (const teams of Object.values(GROUPS)) {
+  for (const t of teams) GROUP_TEAM_LOOKUP[normalize(t)] = t;
+}
+function canonicalGroupTeam(espnName) {
+  return GROUP_TEAM_LOOKUP[normalize(espnName)] || null;
+}
+
+// Compute final group standings from group-stage match results.
+// Returns { A: { order: [1st,2nd,3rd,4th], complete: bool }, ... }.
+// A group is complete once all 6 round-robin matches are final.
+function computeStandings(events) {
+  const tables = {}; // letter -> { team -> {pts,gd,gf} }
+  const finals = {}; // letter -> count of final matches
+  for (const letter of Object.keys(GROUPS)) {
+    tables[letter] = {};
+    for (const t of GROUPS[letter]) tables[letter][t] = { pts: 0, gd: 0, gf: 0 };
+    finals[letter] = 0;
+  }
+
+  for (const event of events) {
+    const comp = event.competitions?.[0];
+    if (comp?.status?.type?.state !== "post") continue;
+    const cs = comp.competitors || [];
+    if (cs.length < 2) continue;
+    const a = canonicalGroupTeam(cs[0].team?.displayName);
+    const b = canonicalGroupTeam(cs[1].team?.displayName);
+    if (!a || !b) continue;
+    // both teams must belong to the same group (identifies a group-stage match)
+    const letter = Object.keys(GROUPS).find(
+      (L) => GROUPS[L].includes(a) && GROUPS[L].includes(b),
+    );
+    if (!letter) continue;
+    const sa = parseInt(cs[0].score ?? 0);
+    const sb = parseInt(cs[1].score ?? 0);
+    const T = tables[letter];
+    T[a].gf += sa;
+    T[b].gf += sb;
+    T[a].gd += sa - sb;
+    T[b].gd += sb - sa;
+    if (sa > sb) T[a].pts += 3;
+    else if (sb > sa) T[b].pts += 3;
+    else {
+      T[a].pts += 1;
+      T[b].pts += 1;
+    }
+    finals[letter]++;
+  }
+
+  const standings = {};
+  for (const letter of Object.keys(GROUPS)) {
+    const order = [...GROUPS[letter]].sort((x, y) => {
+      const A = tables[letter][x];
+      const B = tables[letter][y];
+      return B.pts - A.pts || B.gd - A.gd || B.gf - A.gf;
+    });
+    standings[letter] = { order, complete: finals[letter] >= 6 };
+  }
+  return standings;
 }
 
 function findMatch(homeName, awayName) {
@@ -30,6 +97,7 @@ function findMatch(homeName, awayName) {
 export function useScores() {
   const [results, setResults] = useState({});
   const [liveScores, setLiveScores] = useState({});
+  const [groupStandings, setGroupStandings] = useState({});
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState(null);
   const [lastUpdated, setLastUpdated] = useState(null);
@@ -50,9 +118,13 @@ export function useScores() {
         "20260703",
         "20260704",
       ];
+      // group stage: Jun 11-27
+      const GROUP_DATES = Array.from({ length: 17 }, (_, i) =>
+        String(20260611 + i),
+      );
       const allResponses = await Promise.all(
-        R32_DATES.map((date) =>
-          fetch(`${ESPN_BASE}?dates=${date}&limit=20`)
+        [...GROUP_DATES, ...R32_DATES].map((date) =>
+          fetch(`${ESPN_BASE}?dates=${date}&limit=30`)
             .then((r) => r.json())
             .catch(() => null),
         ),
@@ -137,6 +209,7 @@ export function useScores() {
 
       setResults(newResults);
       setLiveScores(newLive);
+      setGroupStandings(computeStandings(allEvents));
       setHasLive(anyLive);
       setLastUpdated(new Date());
     } catch (err) {
@@ -174,6 +247,7 @@ export function useScores() {
   return {
     results,
     liveScores,
+    groupStandings,
     loading,
     error,
     lastUpdated,

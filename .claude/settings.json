@@ -1,0 +1,11 @@
+{
+  "permissions": {
+    "allow": [
+      "Bash(pnpm typecheck)",
+      "Bash(pnpm lint)",
+      "Bash(pnpm test)",
+      "Bash(git fetch *)",
+      "mcp__plugin_slack_slack__slack_read_thread"
+    ]
+  }
+}

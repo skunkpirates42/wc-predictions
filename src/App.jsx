@@ -1,6 +1,9 @@
 import { useState } from "react";
-import { MATCHES, FLAGS, PARTICIPANTS } from "./data.js";
+import { MATCHES, FLAGS, GROUPS, PARTICIPANTS } from "./data.js";
 import { useScores } from "./useScores.js";
+import { scoreR32, scoreGroups } from "./scoring.js";
+
+const GROUP_LETTERS = Object.keys(GROUPS);
 
 function getMedal(ranked, index) {
   const pts = ranked[index].pts;
@@ -12,13 +15,6 @@ function getMedal(ranked, index) {
   if (pts === second) return "🥈";
   if (pts === third) return "🥉";
   return `${index + 1}`;
-}
-
-function score(picks, results) {
-  return picks.reduce((pts, pick, i) => {
-    if (!pick || !results[i]) return pts;
-    return pts + (pick === results[i].winner ? 10 : 0);
-  }, 0);
 }
 
 const s = {
@@ -116,10 +112,77 @@ const s = {
     cursor: "pointer",
     fontWeight: active ? 600 : 400,
   }),
+  roundTabs: {
+    display: "flex",
+    gap: 5,
+    marginBottom: 12,
+    flexWrap: "wrap",
+  },
+  roundTab: (active, disabled) => ({
+    fontSize: 11,
+    padding: "4px 10px",
+    borderRadius: 7,
+    border: active ? "2px solid #3c4f9e" : "1px solid #ddd",
+    background: active ? "#e8f0fe" : "white",
+    color: disabled ? "#ccc" : active ? "#3c4f9e" : "#555",
+    cursor: disabled ? "not-allowed" : "pointer",
+    fontWeight: active ? 600 : 400,
+  }),
+  groupCard: {
+    border: "0.5px solid #e0e0e0",
+    borderRadius: 10,
+    padding: "8px 12px",
+    background: "white",
+  },
+  groupHead: {
+    fontSize: 12,
+    fontWeight: 600,
+    color: "#333",
+    marginBottom: 6,
+    display: "flex",
+    alignItems: "center",
+    gap: 8,
+  },
+  provisional: {
+    fontSize: 10,
+    fontWeight: 400,
+    color: "#b8860b",
+    background: "#fffbe6",
+    borderRadius: 4,
+    padding: "1px 6px",
+  },
+  standRow: (qualifier, correct, wrong) => ({
+    display: "flex",
+    alignItems: "center",
+    gap: 8,
+    fontSize: 12,
+    padding: "4px 6px",
+    borderRadius: 6,
+    background: correct
+      ? "#eaf3de"
+      : wrong
+        ? "#fcebeb"
+        : qualifier
+          ? "#f0f6ff"
+          : "transparent",
+  }),
 };
 
-function PlayerDrawer({ player, me, results, matches, onClose, comparing, setComparing }) {
+function PlayerDrawer({ player, me, results, matches, groupStandings, onClose, comparing, setComparing }) {
+  const [round, setRound] = useState("r32");
   if (!player) return null;
+  const isOther = me && player.name !== me.name;
+  const showCompare = comparing && isOther;
+  const pGroups = player.picks.groups;
+  const myGroups = me?.picks.groups;
+  // fall back to whichever round the player actually has
+  const activeRound =
+    round === "groups" && !pGroups
+      ? "r32"
+      : round === "r32" && !player.picks.r32
+        ? "groups"
+        : round;
+
   return (
     <div style={{
       position: 'fixed', inset: 0, zIndex: 100,
@@ -134,12 +197,14 @@ function PlayerDrawer({ player, me, results, matches, onClose, comparing, setCom
         padding: '1.25rem', maxHeight: '80vh', overflowY: 'auto', zIndex: 1,
       }}>
         {/* header */}
-        <div style={{ display: 'flex', alignItems: 'center', marginBottom: 16, gap: 10 }}>
+        <div style={{ display: 'flex', alignItems: 'center', marginBottom: 12, gap: 10 }}>
           <div style={{ flex: 1 }}>
             <div style={{ fontSize: 16, fontWeight: 600 }}>{player.name}</div>
-            <div style={{ fontSize: 12, color: '#888' }}>{player.pts} pts</div>
+            <div style={{ fontSize: 12, color: '#888' }}>
+              {player.pts} pts · G {player.groupPts ?? 0} · R32 {player.r32Pts ?? 0}
+            </div>
           </div>
-          {me && player.name !== me.name && (
+          {isOther && (
             <button onClick={() => setComparing(c => !c)} style={{
               fontSize: 12, padding: '5px 12px', borderRadius: 8,
               border: comparing ? '2px solid #222' : '1px solid #ccc',
@@ -156,69 +221,128 @@ function PlayerDrawer({ player, me, results, matches, onClose, comparing, setCom
           }}>✕</button>
         </div>
 
-        {/* column headers when comparing */}
-        {comparing && me && (
-          <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr 1fr', gap: 4, marginBottom: 6 }}>
-            <div style={{ fontSize: 11, color: '#888' }}>Match</div>
-            <div style={{ fontSize: 11, color: '#888', textAlign: 'center' }}>{player.name.split(' ')[0]}</div>
-            <div style={{ fontSize: 11, color: '#888', textAlign: 'center' }}>{me.name.split(' ')[0]} (you)</div>
-          </div>
+        {/* round selector */}
+        <div style={s.roundTabs}>
+          {[
+            ["groups", "Group Stage", !!pGroups],
+            ["r32", "Round of 32", !!player.picks.r32],
+          ].map(([key, label, enabled]) => (
+            <button
+              key={key}
+              disabled={!enabled}
+              onClick={() => enabled && setRound(key)}
+              style={s.roundTab(activeRound === key, !enabled)}
+            >
+              {label}
+            </button>
+          ))}
+        </div>
+
+        {/* R32 */}
+        {activeRound === "r32" && (
+          <>
+            {showCompare && (
+              <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr 1fr', gap: 4, marginBottom: 6 }}>
+                <div style={{ fontSize: 11, color: '#888' }}>Match</div>
+                <div style={{ fontSize: 11, color: '#888', textAlign: 'center' }}>{player.name.split(' ')[0]}</div>
+                <div style={{ fontSize: 11, color: '#888', textAlign: 'center' }}>{me.name.split(' ')[0]} (you)</div>
+              </div>
+            )}
+            {matches.map((m, i) => {
+              const pick = player.picks.r32?.[i];
+              const mePick = me?.picks.r32?.[i];
+              const result = results[i]?.winner;
+              const pickCorrect = pick && result && pick === result;
+              const pickWrong = pick && result && pick !== result;
+              const meCorrect = mePick && result && mePick === result;
+              const meWrong = mePick && result && mePick !== result;
+              const agree = pick && mePick && pick === mePick;
+
+              if (showCompare) {
+                return (
+                  <div key={m.id} style={{
+                    display: 'grid', gridTemplateColumns: '1fr 1fr 1fr',
+                    gap: 4, padding: '7px 0', borderBottom: '0.5px solid #f0f0f0',
+                  }}>
+                    <div style={{ fontSize: 12, color: '#666' }}>{m.label}</div>
+                    <div style={{ fontSize: 12, textAlign: 'center', fontWeight: 500,
+                      color: pickCorrect ? '#3b6d11' : pickWrong ? '#a32d2d' : '#333' }}>
+                      {pick || '—'} {pickCorrect ? '✓' : pickWrong ? '✗' : ''}
+                    </div>
+                    <div style={{ fontSize: 12, textAlign: 'center', fontWeight: 500,
+                      color: meCorrect ? '#3b6d11' : meWrong ? '#a32d2d' : '#333',
+                      background: agree ? '#fffbe6' : 'transparent', borderRadius: 4 }}>
+                      {mePick || '—'} {meCorrect ? '✓' : meWrong ? '✗' : ''}
+                    </div>
+                  </div>
+                );
+              }
+              return (
+                <div key={m.id} style={{
+                  display: 'flex', alignItems: 'center', gap: 8,
+                  padding: '7px 10px', marginBottom: 4, borderRadius: 8,
+                  background: pickCorrect ? '#eaf3de' : pickWrong ? '#fcebeb' : '#fafafa',
+                }}>
+                  <span style={{ fontSize: 12, color: '#666', flex: 1 }}>{m.label}</span>
+                  <span style={{ fontSize: 12, fontWeight: 500 }}>{pick || '—'}</span>
+                  {result && (
+                    <span style={{ fontSize: 13, fontWeight: 'bold', color: pickCorrect ? '#3b6d11' : '#a32d2d' }}>
+                      {pickCorrect ? '✓' : '✗'}
+                    </span>
+                  )}
+                  {!result && <span style={{ fontSize: 11, color: '#ccc' }}>pending</span>}
+                </div>
+              );
+            })}
+          </>
         )}
 
-        {/* picks list */}
-        {matches.map((m, i) => {
-          const pick = player.picks[i];
-          const mePick = me?.picks[i];
-          const result = results[i]?.winner;
-          const pickCorrect = pick && result && pick === result;
-          const pickWrong = pick && result && pick !== result;
-          const meCorrect = mePick && result && mePick === result;
-          const meWrong = mePick && result && mePick !== result;
-          const agree = pick && mePick && pick === mePick;
+        {/* Groups */}
+        {activeRound === "groups" && !showCompare && (
+          <GroupPicksView groups={pGroups} standings={groupStandings} />
+        )}
 
-          if (comparing && me && player.name !== me.name) {
-            return (
-              <div key={m.id} style={{
-                display: 'grid', gridTemplateColumns: '1fr 1fr 1fr',
-                gap: 4, padding: '7px 0',
-                borderBottom: '0.5px solid #f0f0f0',
-              }}>
-                <div style={{ fontSize: 12, color: '#666' }}>{m.label}</div>
-                <div style={{
-                  fontSize: 12, textAlign: 'center', fontWeight: 500,
-                  color: pickCorrect ? '#3b6d11' : pickWrong ? '#a32d2d' : '#333',
-                }}>
-                  {pick || '—'} {pickCorrect ? '✓' : pickWrong ? '✗' : ''}
+        {activeRound === "groups" && showCompare && (
+          <div style={{ display: "grid", gap: 10 }}>
+            {GROUP_LETTERS.map((L) => {
+              const picks = pGroups?.[L];
+              const mine = myGroups?.[L];
+              if (!picks && !mine) return null;
+              const st = groupStandings?.[L];
+              return (
+                <div key={L} style={s.groupCard}>
+                  <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr 1fr', gap: 4, marginBottom: 4 }}>
+                    <div style={s.groupHead}>Group {L}</div>
+                    <div style={{ fontSize: 11, color: '#888', textAlign: 'center' }}>{player.name.split(' ')[0]}</div>
+                    <div style={{ fontSize: 11, color: '#888', textAlign: 'center' }}>{me.name.split(' ')[0]} (you)</div>
+                  </div>
+                  {[0, 1, 2, 3].map((i) => {
+                    const pt = picks?.[i];
+                    const mt = mine?.[i];
+                    const actual = st?.order[i];
+                    const pc = st?.complete && pt && actual === pt;
+                    const pw = st?.complete && pt && actual !== pt;
+                    const mc = st?.complete && mt && actual === mt;
+                    const mw = st?.complete && mt && actual !== mt;
+                    const agree = pt && mt && pt === mt;
+                    return (
+                      <div key={i} style={{ display: 'grid', gridTemplateColumns: '1fr 1fr 1fr', gap: 4, padding: '4px 0' }}>
+                        <div style={{ fontSize: 11, color: '#999' }}>{i + 1}{st?.complete ? ` ${actual}` : ''}</div>
+                        <div style={{ fontSize: 12, textAlign: 'center', color: pc ? '#3b6d11' : pw ? '#a32d2d' : '#333' }}>
+                          {pt || '—'} {pc ? '✓' : pw ? '✗' : ''}
+                        </div>
+                        <div style={{ fontSize: 12, textAlign: 'center', color: mc ? '#3b6d11' : mw ? '#a32d2d' : '#333',
+                          background: agree ? '#fffbe6' : 'transparent', borderRadius: 4 }}>
+                          {mt || '—'} {mc ? '✓' : mw ? '✗' : ''}
+                        </div>
+                      </div>
+                    );
+                  })}
                 </div>
-                <div style={{
-                  fontSize: 12, textAlign: 'center', fontWeight: 500,
-                  color: meCorrect ? '#3b6d11' : meWrong ? '#a32d2d' : '#333',
-                  background: agree ? '#fffbe6' : 'transparent',
-                  borderRadius: 4,
-                }}>
-                  {mePick || '—'} {meCorrect ? '✓' : meWrong ? '✗' : ''}
-                </div>
-              </div>
-            );
-          }
-
-          return (
-            <div key={m.id} style={{
-              display: 'flex', alignItems: 'center', gap: 8,
-              padding: '7px 10px', marginBottom: 4, borderRadius: 8,
-              background: pickCorrect ? '#eaf3de' : pickWrong ? '#fcebeb' : '#fafafa',
-            }}>
-              <span style={{ fontSize: 12, color: '#666', flex: 1 }}>{m.label}</span>
-              <span style={{ fontSize: 12, fontWeight: 500 }}>{pick || '—'}</span>
-              {result && (
-                <span style={{ fontSize: 13, fontWeight: 'bold', color: pickCorrect ? '#3b6d11' : '#a32d2d' }}>
-                  {pickCorrect ? '✓' : '✗'}
-                </span>
-              )}
-              {!result && <span style={{ fontSize: 11, color: '#ccc' }}>pending</span>}
-            </div>
-          );
-        })}
+              );
+            })}
+          </div>
+        )}
       </div>
     </div>
   );
@@ -240,16 +364,99 @@ function LiveDot() {
   );
 }
 
+// Actual final group standings (Results → Groups). Highlights top-2 (qualifiers).
+function GroupStandingsView({ standings }) {
+  return (
+    <div style={{ display: "grid", gap: 10 }}>
+      {GROUP_LETTERS.map((L) => {
+        const st = standings[L];
+        return (
+          <div key={L} style={s.groupCard}>
+            <div style={s.groupHead}>
+              Group {L}
+              {st && !st.complete && (
+                <span style={s.provisional}>provisional</span>
+              )}
+            </div>
+            {st ? (
+              st.order.map((team, i) => (
+                <div key={team} style={s.standRow(i < 2)}>
+                  <span style={{ width: 16, color: "#888" }}>{i + 1}</span>
+                  <span style={{ flex: 1 }}>
+                    {FLAGS[team] || ""} {team}
+                  </span>
+                </div>
+              ))
+            ) : (
+              <div style={{ fontSize: 12, color: "#aaa" }}>no data</div>
+            )}
+          </div>
+        );
+      })}
+    </div>
+  );
+}
+
+// A participant's group predictions vs actual (My Picks → Groups).
+function GroupPicksView({ groups, standings }) {
+  if (!groups)
+    return (
+      <div style={{ fontSize: 13, color: "#888", padding: "8px 2px" }}>
+        No group-stage picks entered.
+      </div>
+    );
+  return (
+    <div style={{ display: "grid", gap: 10 }}>
+      {GROUP_LETTERS.map((L) => {
+        const picks = groups[L];
+        const st = standings[L];
+        if (!picks) return null;
+        return (
+          <div key={L} style={s.groupCard}>
+            <div style={s.groupHead}>
+              Group {L}
+              {st && !st.complete && (
+                <span style={s.provisional}>provisional</span>
+              )}
+            </div>
+            {picks.map((team, i) => {
+              const actual = st?.order[i];
+              const correct = st?.complete && actual === team;
+              const wrong = st?.complete && actual !== team;
+              return (
+                <div key={i} style={s.standRow(false, correct, wrong)}>
+                  <span style={{ width: 16, color: "#888" }}>{i + 1}</span>
+                  <span style={{ flex: 1 }}>
+                    {FLAGS[team] || ""} {team}
+                  </span>
+                  {st?.complete && (
+                    <span style={{ fontSize: 12, fontWeight: "bold", color: correct ? "#3b6d11" : "#a32d2d" }}>
+                      {correct ? "✓" : "✗"}
+                    </span>
+                  )}
+                </div>
+              );
+            })}
+          </div>
+        );
+      })}
+    </div>
+  );
+}
+
 export default function App() {
   const [myName, setMyName] = useState(
     () => localStorage.getItem("wc_user") || null,
   );
   const [tab, setTab] = useState("leaderboard");
+  const [picksRound, setPicksRound] = useState("r32");
+  const [resultsRound, setResultsRound] = useState("groups");
   const [selectedPlayer, setSelectedPlayer] = useState(null);
   const [comparing, setComparing] = useState(false);
   const {
     results,
     liveScores,
+    groupStandings,
     loading,
     error,
     lastUpdated,
@@ -309,8 +516,12 @@ export default function App() {
   const played = Object.keys(results).length;
 
   const ranked = [...PARTICIPANTS]
-    .map((p) => ({ ...p, pts: score(p.picks, results) }))
-    .sort((a, b) => b.pts - a.pts);
+    .map((p) => {
+      const r32 = scoreR32(p.picks.r32, results);
+      const groups = scoreGroups(p.picks.groups, groupStandings).total;
+      return { ...p, r32Pts: r32, groupPts: groups, pts: r32 + groups };
+    })
+    .sort((a, b) => b.pts - a.pts || a.name.localeCompare(b.name));
 
   const me = ranked.find((p) => p.name === myName);
   const myRank = me ? ranked.indexOf(me) + 1 : null;
@@ -320,9 +531,9 @@ export default function App() {
       <style>{`@keyframes pulse{0%,100%{opacity:1}50%{opacity:0.3}}`}</style>
 
       <div style={s.header}>
-        <h1 style={s.h1}>⚽ WC 2026 — Round of 32</h1>
+        <h1 style={s.h1}>⚽ WC 2026 Predictions</h1>
         <p style={s.sub}>
-          Recharge Predictions Leaderboard · {played}/15 results in
+          Recharge Leaderboard · Group stage + Round of 32
         </p>
       </div>
 
@@ -374,9 +585,6 @@ export default function App() {
 
           {ranked.map((p, i) => {
             const isMe = p.name === myName;
-            const correct = p.picks.filter(
-              (pk, j) => pk && results[j]?.winner && pk === results[j].winner,
-            ).length;
             return (
               <div
                 key={p.name}
@@ -406,8 +614,8 @@ export default function App() {
                   {p.name}
                   {isMe ? " (you)" : ""}
                 </span>
-                <span style={{ fontSize: 11, color: "#888" }}>
-                  {correct}/{played}
+                <span style={{ fontSize: 11, color: "#888", minWidth: 96, textAlign: "right" }}>
+                  G {p.groupPts} · R32 {p.r32Pts}
                 </span>
                 <span
                   style={{
@@ -428,8 +636,32 @@ export default function App() {
       {/* MY PICKS */}
       {tab === "my picks" && (
         <div>
-          {MATCHES.map((m, i) => {
-            const myPick = me?.picks[i];
+          <div style={s.roundTabs}>
+            {[
+              ["groups", "Group Stage", !!me?.picks.groups],
+              ["r32", "Round of 32", !!me?.picks.r32],
+            ].map(([key, label, enabled]) => (
+              <button
+                key={key}
+                disabled={!enabled}
+                onClick={() => enabled && setPicksRound(key)}
+                style={s.roundTab(picksRound === key, !enabled)}
+              >
+                {label}
+              </button>
+            ))}
+          </div>
+
+          {picksRound === "groups" && (
+            <GroupPicksView
+              groups={me?.picks.groups}
+              standings={groupStandings}
+            />
+          )}
+
+          {picksRound === "r32" &&
+            MATCHES.map((m, i) => {
+            const myPick = me?.picks.r32?.[i];
             const result = results[i];
             const live = liveScores[i];
             const correct = result && myPick === result.winner;
@@ -466,27 +698,64 @@ export default function App() {
               </div>
             );
           })}
-          <div
-            style={{
-              marginTop: 8,
-              padding: "10px 12px",
-              background: "#f7f7f5",
-              borderRadius: 8,
-              display: "flex",
-              justifyContent: "space-between",
-            }}
-          >
-            <span style={{ fontSize: 12, color: "#888" }}>
-              Total R32 points
-            </span>
-            <span style={{ fontSize: 14, fontWeight: 600 }}>{me?.pts} pts</span>
-          </div>
+
+          {picksRound === "r32" && (
+            <div
+              style={{
+                marginTop: 8,
+                padding: "10px 12px",
+                background: "#f7f7f5",
+                borderRadius: 8,
+                display: "flex",
+                justifyContent: "space-between",
+              }}
+            >
+              <span style={{ fontSize: 12, color: "#888" }}>
+                Total R32 points
+              </span>
+              <span style={{ fontSize: 14, fontWeight: 600 }}>
+                {me?.r32Pts ?? 0} pts
+              </span>
+            </div>
+          )}
         </div>
       )}
 
       {/* RESULTS */}
       {tab === "results" && (
         <div>
+          <div style={s.roundTabs}>
+            {[
+              ["groups", "Groups", true],
+              ["r32", "R32", true],
+              ["r16", "R16", false],
+              ["qf", "QF", false],
+              ["sf", "SF", false],
+              ["final", "Final", false],
+            ].map(([key, label, enabled]) => (
+              <button
+                key={key}
+                disabled={!enabled}
+                onClick={() => enabled && setResultsRound(key)}
+                style={s.roundTab(resultsRound === key, !enabled)}
+              >
+                {label}
+              </button>
+            ))}
+          </div>
+
+          {resultsRound === "groups" && (
+            <GroupStandingsView standings={groupStandings} />
+          )}
+
+          {["r16", "qf", "sf", "final"].includes(resultsRound) && (
+            <div style={{ fontSize: 13, color: "#aaa", padding: "16px 2px", textAlign: "center" }}>
+              Not started yet — picks &amp; results appear here once this round begins.
+            </div>
+          )}
+
+          {resultsRound === "r32" && (
+          <div>
           <p style={{ fontSize: 12, color: "#888", margin: "0 0 10px" }}>
             Results are fetched automatically from ESPN. Use buttons to manually
             override if needed.
@@ -560,6 +829,8 @@ export default function App() {
               </div>
             );
           })}
+          </div>
+          )}
         </div>
       )}
 
@@ -568,6 +839,7 @@ export default function App() {
         me={me}
         results={results}
         matches={MATCHES}
+        groupStandings={groupStandings}
         onClose={() => {
           setSelectedPlayer(null);
           setComparing(false);
