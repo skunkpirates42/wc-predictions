@@ -6,10 +6,11 @@ import { scoreR32, scoreGroups } from "./scoring.js";
 const GROUP_LETTERS = Object.keys(GROUPS);
 
 function getMedal(ranked, index) {
-  const pts = ranked[index].pts;
-  const first = ranked[0].pts;
-  const second = ranked.find((p) => p.pts < first)?.pts;
-  const third = ranked.find((p) => p.pts < (second ?? first))?.pts;
+  const val = (p) => p.shown ?? p.pts;
+  const pts = val(ranked[index]);
+  const first = val(ranked[0]);
+  const second = val(ranked.find((p) => val(p) < first) ?? {});
+  const third = val(ranked.find((p) => val(p) < (second ?? first)) ?? {});
 
   if (pts === first) return "🥇";
   if (pts === second) return "🥈";
@@ -449,6 +450,7 @@ export default function App() {
     () => localStorage.getItem("wc_user") || null,
   );
   const [tab, setTab] = useState("leaderboard");
+  const [boardScope, setBoardScope] = useState("total");
   const [picksRound, setPicksRound] = useState("r32");
   const [resultsRound, setResultsRound] = useState("groups");
   const [selectedPlayer, setSelectedPlayer] = useState(null);
@@ -513,8 +515,6 @@ export default function App() {
     );
   }
 
-  const played = Object.keys(results).length;
-
   const ranked = [...PARTICIPANTS]
     .map((p) => {
       const r32 = scoreR32(p.picks.r32, results);
@@ -524,7 +524,14 @@ export default function App() {
     .sort((a, b) => b.pts - a.pts || a.name.localeCompare(b.name));
 
   const me = ranked.find((p) => p.name === myName);
-  const myRank = me ? ranked.indexOf(me) + 1 : null;
+
+  // leaderboard scope: total (default) | groups | r32
+  const scopeVal = (p) =>
+    boardScope === "groups" ? p.groupPts : boardScope === "r32" ? p.r32Pts : p.pts;
+  const board = ranked
+    .map((p) => ({ ...p, shown: scopeVal(p) }))
+    .sort((a, b) => b.shown - a.shown || a.name.localeCompare(b.name));
+  const myRank = me ? board.findIndex((p) => p.name === myName) + 1 : null;
 
   return (
     <div style={s.wrap}>
@@ -570,20 +577,41 @@ export default function App() {
       {/* LEADERBOARD */}
       {tab === "leaderboard" && (
         <div>
+          <div style={s.roundTabs}>
+            {[
+              ["total", "Overall"],
+              ["groups", "Group Stage"],
+              ["r32", "Round of 32"],
+            ].map(([key, label]) => (
+              <button
+                key={key}
+                onClick={() => setBoardScope(key)}
+                style={s.roundTab(boardScope === key, false)}
+              >
+                {label}
+              </button>
+            ))}
+          </div>
+
           {me && (
             <div style={s.myCallout}>
               <div>
                 <div style={{ fontSize: 13, fontWeight: 500 }}>
-                  You're #{myRank} of {ranked.length}
+                  You're #{myRank} of {board.length}
                 </div>
                 <div style={{ fontSize: 12, color: "#555" }}>
-                  {me.pts} pts · {15 - played} matches left
+                  {scopeVal(me)} pts
+                  {boardScope === "total"
+                    ? " overall"
+                    : boardScope === "groups"
+                      ? " · group stage"
+                      : " · round of 32"}
                 </div>
               </div>
             </div>
           )}
 
-          {ranked.map((p, i) => {
+          {board.map((p, i) => {
             const isMe = p.name === myName;
             return (
               <div
@@ -602,7 +630,7 @@ export default function App() {
                     width: 26,
                   }}
                 >
-                  {getMedal(ranked, i)}
+                  {getMedal(board, i)}
                 </span>
                 <span
                   style={{
@@ -614,9 +642,11 @@ export default function App() {
                   {p.name}
                   {isMe ? " (you)" : ""}
                 </span>
-                <span style={{ fontSize: 11, color: "#888", minWidth: 96, textAlign: "right" }}>
-                  G {p.groupPts} · R32 {p.r32Pts}
-                </span>
+                {boardScope === "total" && (
+                  <span style={{ fontSize: 11, color: "#888", minWidth: 96, textAlign: "right" }}>
+                    G {p.groupPts} · R32 {p.r32Pts}
+                  </span>
+                )}
                 <span
                   style={{
                     fontSize: 14,
@@ -625,7 +655,7 @@ export default function App() {
                     textAlign: "right",
                   }}
                 >
-                  {p.pts} pts
+                  {p.shown} pts
                 </span>
               </div>
             );
