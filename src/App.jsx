@@ -2,6 +2,7 @@ import { useState } from "react";
 import { MATCHES, FLAGS, GROUPS, PARTICIPANTS } from "./data.js";
 import { useScores } from "./useScores.js";
 import { scoreR32, scoreGroups } from "./scoring.js";
+import Analytics from "./Analytics.jsx";
 
 const GROUP_LETTERS = Object.keys(GROUPS);
 
@@ -567,7 +568,7 @@ export default function App() {
 
       {/* Tabs */}
       <div style={s.tabs}>
-        {["leaderboard", "my picks", "results"].map((t) => (
+        {["leaderboard", "my picks", "results", "analytics"].map((t) => (
           <button key={t} onClick={() => setTab(t)} style={s.tab(tab === t)}>
             {t.charAt(0).toUpperCase() + t.slice(1)}
           </button>
@@ -862,6 +863,17 @@ export default function App() {
           </div>
           )}
         </div>
+      )}
+
+      {/* ANALYTICS */}
+      {tab === "analytics" && (
+        <Analytics
+          participants={PARTICIPANTS}
+          ranked={ranked}
+          myName={myName}
+          results={results}
+          groupStandings={groupStandings}
+        />
       )}
 
       <PlayerDrawer

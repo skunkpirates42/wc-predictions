@@ -33,10 +33,12 @@ function canonicalGroupTeam(espnName) {
 function computeStandings(events) {
   const tables = {}; // letter -> { team -> {pts,gd,gf} }
   const finals = {}; // letter -> count of final matches
+  const lastDate = {}; // letter -> latest final match date (YYYY-MM-DD)
   for (const letter of Object.keys(GROUPS)) {
     tables[letter] = {};
     for (const t of GROUPS[letter]) tables[letter][t] = { pts: 0, gd: 0, gf: 0 };
     finals[letter] = 0;
+    lastDate[letter] = null;
   }
 
   for (const event of events) {
@@ -66,6 +68,8 @@ function computeStandings(events) {
       T[b].pts += 1;
     }
     finals[letter]++;
+    const d = (event.date || "").slice(0, 10);
+    if (d && (!lastDate[letter] || d > lastDate[letter])) lastDate[letter] = d;
   }
 
   const standings = {};
@@ -75,7 +79,11 @@ function computeStandings(events) {
       const B = tables[letter][y];
       return B.pts - A.pts || B.gd - A.gd || B.gf - A.gf;
     });
-    standings[letter] = { order, complete: finals[letter] >= 6 };
+    standings[letter] = {
+      order,
+      complete: finals[letter] >= 6,
+      completeDate: finals[letter] >= 6 ? lastDate[letter] : null,
+    };
   }
   return standings;
 }
@@ -203,6 +211,7 @@ export function useScores() {
             awayScore,
             isPens,
             isAET,
+            date: (event.date || "").slice(0, 10),
           };
         }
       });
