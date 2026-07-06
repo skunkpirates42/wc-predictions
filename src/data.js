@@ -14,6 +14,14 @@ export const MATCHES = [
   { id: 12, label: "Australia vs Egypt", t1: "Australia", t2: "Egypt" },
   { id: 13, label: "Argentina vs Cabo Verde", t1: "Argentina", t2: "Cabo Verde" },
   { id: 14, label: "Colombia vs Ghana", t1: "Colombia", t2: "Ghana" },
+  { id: 15, label: "Portugal vs Spain (R16)", t1: "Portugal", t2: "Spain" },
+  { id: 16, label: "USA vs Belgium (R16)", t1: "USA", t2: "Belgium" },
+  { id: 17, label: "Argentina vs Egypt (R16)", t1: "Argentina", t2: "Egypt" },
+  { id: 18, label: "Switzerland vs Colombia (R16)", t1: "Switzerland", t2: "Colombia" },
+  { id: 19, label: "Mexico vs England (R16 free)", t1: "Mexico", t2: "England" },
+  { id: 20, label: "Brazil vs Norway (R16 free)", t1: "Brazil", t2: "Norway" },
+  { id: 21, label: "Canada vs Morocco (R16 free)", t1: "Canada", t2: "Morocco" },
+  { id: 22, label: "Paraguay vs France (R16 free)", t1: "Paraguay", t2: "France" },
 ];
 
 export const GROUP_LETTERS = ["A", "B", "C", "D", "E", "F", "G", "H", "I", "J", "K", "L"];
@@ -91,6 +99,7 @@ export const PARTICIPANTS = [
     name: "Peter Ramos",
     picks: {
       r32: ["Brazil", "Germany", "Netherlands", "Norway", "France", "Mexico", "England", "Belgium", "USA", "Spain", "Portugal", "Switzerland", "Egypt", "Argentina", "Colombia"],
+      r16: ["Spain", "Belgium", "Argentina", "Colombia", "England", "Norway", "Morocco", "France"],
       groups: {
       A: ["Mexico", "Korea Republic", "Czechia", "South Africa"],
       B: ["Canada", "Switzerland", "Bosnia", "Qatar"],
@@ -109,6 +118,7 @@ export const PARTICIPANTS = [
     name: "Rodrigo Lopetegui",
     picks: {
       r32: ["Brazil", "Germany", "Netherlands", "Norway", "France", "Mexico", "England", "Belgium", "USA", "Spain", "Portugal", "Algeria", "Egypt", "Argentina", "Colombia"],
+      r16: ["Portugal", "USA", "Argentina", "Colombia", "England", "Norway", "Morocco", "France"],
       groups: {
       A: ["Mexico", "Korea Republic", "South Africa", "Czechia"],
       B: ["Switzerland", "Canada", "Qatar", "Bosnia"],
@@ -129,6 +139,7 @@ export const PARTICIPANTS = [
     name: "Luke Eisenbraun",
     picks: {
       r32: ["Brazil", "Germany", "Netherlands", "Norway", "France", "Mexico", "England", "Belgium", "USA", "Spain", "Portugal", "Switzerland", "Egypt", "Cabo Verde", "Colombia"],
+      r16: ["Spain", "USA", "Argentina", "Colombia", "England", "Norway", "Morocco", "France"],
       groups: {
       A: ["Mexico", "Korea Republic", "Czechia", "South Africa"],
       B: ["Switzerland", "Canada", "Bosnia", "Qatar"],
@@ -149,6 +160,7 @@ export const PARTICIPANTS = [
     name: "Prasu Chakraborty",
     picks: {
       r32: ["Brazil", "Germany", "Morocco", "Norway", "France", "Ecuador", "England", "Senegal", "USA", "Spain", "Portugal", "Switzerland", "Egypt", "Argentina", "Colombia"],
+      r16: ["Spain", "Belgium", "Argentina", "Colombia", "England", "Norway", "Morocco", "France"],
       groups: {
       A: ["Mexico", "Czechia", "Korea Republic", "South Africa"],
       B: ["Switzerland", "Canada", "Bosnia", "Qatar"],
@@ -169,6 +181,7 @@ export const PARTICIPANTS = [
     name: "Ola Oladunjoye",
     picks: {
       r32: ["Brazil", "Germany", "Netherlands", "Norway", "France", "Mexico", "England", "Belgium", "USA", "Spain", "Croatia", "Switzerland", "Egypt", "Argentina", "Ghana"],
+      r16: ["Spain", "USA", "Argentina", "Colombia", "England", "Norway", "Morocco", "France"],
       groups: {
       A: ["Mexico", "Korea Republic", "Czechia", "South Africa"],
       B: ["Canada", "Switzerland", "Qatar", "Bosnia"],
@@ -209,6 +222,7 @@ export const PARTICIPANTS = [
     name: "Jake Walsh",
     picks: {
       r32: ["Brazil", "Germany", "Morocco", "Norway", "France", "Mexico", "England", "Senegal", "USA", "Spain", "Portugal", "Switzerland", "Egypt", "Argentina", "Colombia"],
+      r16: ["Portugal", "Belgium", "Argentina", "Switzerland", "England", "Norway", "Morocco", "France"],
       groups: {
       A: ["Mexico", "Korea Republic", "Czechia", "South Africa"],
       B: ["Switzerland", "Bosnia", "Canada", "Qatar"],
@@ -249,6 +263,7 @@ export const PARTICIPANTS = [
     name: "Juan Sanchez",
     picks: {
       r32: ["Brazil", "Germany", "Netherlands", "Norway", "France", "Mexico", "England", "Belgium", "USA", "Spain", "Portugal", "Switzerland", "Egypt", "Argentina", "Colombia"],
+      r16: ["Portugal", "Belgium", "Argentina", "Colombia", "England", "Norway", "Morocco", "France"],
       groups: {
       A: ["Korea Republic", "Czechia", "South Africa", "Mexico"],
       B: ["Switzerland", "Canada", "Bosnia", "Qatar"],
@@ -269,6 +284,7 @@ export const PARTICIPANTS = [
     name: "Zachary Young",
     picks: {
       r32: ["Brazil", "Germany", "Morocco", "Norway", "France", "Mexico", "England", "Senegal", "USA", "Spain", "Portugal", "Switzerland", "Egypt", "Argentina", "Colombia"],
+      r16: ["Spain", "USA", "Argentina", "Switzerland", "England", "Norway", "Morocco", "France"],
       groups: null,
     },
   },
@@ -276,6 +292,7 @@ export const PARTICIPANTS = [
     name: "Kelly Simer",
     picks: {
       r32: ["Brazil", "Germany", "Morocco", "Cote d'Ivoire", "France", "Mexico", "DR Congo", "Belgium", "USA", "Spain", "Portugal", "Switzerland", "Egypt", "Argentina", "Colombia"],
+      r16: ["Portugal", "USA", "Egypt", "Colombia", "England", "Norway", "Morocco", "France"],
       groups: {
       A: ["Mexico", "Korea Republic", "South Africa", "Czechia"],
       B: ["Canada", "Switzerland", "Bosnia", "Qatar"],
@@ -296,6 +313,7 @@ export const PARTICIPANTS = [
     name: "Daniel Woolridge",
     picks: {
       r32: ["Japan", "Germany", "Netherlands", "Norway", "France", "Mexico", "England", "Senegal", "USA", "Spain", "Portugal", "Algeria", "Egypt", "Argentina", "Ghana"],
+      r16: ["Spain", "Belgium", "Argentina", "Switzerland", "England", "Norway", "Morocco", "France"],
       groups: {
       A: ["Korea Republic", "Mexico", "Czechia", "South Africa"],
       B: ["Switzerland", "Qatar", "Bosnia", "Canada"],
@@ -316,6 +334,7 @@ export const PARTICIPANTS = [
     name: "Marko Dordevic",
     picks: {
       r32: ["Brazil", "Germany", "Netherlands", "Norway", "France", "Mexico", "England", "Senegal", "USA", "Spain", "Croatia", "Switzerland", "Egypt", "Argentina", "Colombia"],
+      r16: ["Spain", "USA", "Argentina", "Colombia", "England", "Norway", "Morocco", "France"],
       groups: {
       A: ["Mexico", "Korea Republic", "Czechia", "South Africa"],
       B: ["Switzerland", "Bosnia", "Canada", "Qatar"],
@@ -336,6 +355,7 @@ export const PARTICIPANTS = [
     name: "Jose Delgado",
     picks: {
       r32: ["Brazil", "Germany", "Morocco", "Norway", "France", "Ecuador", "England", "Belgium", "USA", "Spain", "Portugal", "Algeria", "Egypt", "Argentina", "Colombia"],
+      r16: ["Spain", "Belgium", "Argentina", "Colombia", "England", "Norway", "Morocco", "France"],
       groups: {
       A: ["Korea Republic", "Czechia", "South Africa", "Mexico"],
       B: ["Switzerland", "Canada", "Bosnia", "Qatar"],
@@ -356,6 +376,7 @@ export const PARTICIPANTS = [
     name: "Rodney Gelera",
     picks: {
       r32: ["Japan", "Germany", "Morocco", "Norway", "France", "Mexico", "England", "Belgium", "USA", "Spain", "Portugal", "Switzerland", "Australia", "Argentina", "Colombia"],
+      r16: ["Spain", "Belgium", "Argentina", "Switzerland", "England", "Norway", "Morocco", "France"],
       groups: {
       A: ["Korea Republic", "Mexico", "Czechia", "South Africa"],
       B: ["Switzerland", "Qatar", "Canada", "Bosnia"],
@@ -376,6 +397,7 @@ export const PARTICIPANTS = [
     name: "Caitlan Shumaker",
     picks: {
       r32: ["Brazil", "Germany", "Morocco", "Norway", "France", "Mexico", "England", "Belgium", "USA", "Spain", "Portugal", "Algeria", "Egypt", "Argentina", "Colombia"],
+      r16: ["Spain", "Belgium", "Argentina", "Colombia", "England", "Norway", "Morocco", "France"],
       groups: {
       A: ["Mexico", "Korea Republic", "Czechia", "South Africa"],
       B: ["Canada", "Switzerland", "Qatar", "Bosnia"],
@@ -396,6 +418,7 @@ export const PARTICIPANTS = [
     name: "Irving Osuna",
     picks: {
       r32: ["Brazil", "Germany", "Morocco", "Norway", "France", "Mexico", "England", "Senegal", "USA", "Spain", "Portugal", "Algeria", "Egypt", "Argentina", "Ghana"],
+      r16: ["Portugal", "USA", "Argentina", "Colombia", "England", "Norway", "Morocco", "France"],
       groups: {
       A: ["Mexico", "Korea Republic", "South Africa", "Czechia"],
       B: ["Qatar", "Canada", "Switzerland", "Bosnia"],
@@ -416,6 +439,7 @@ export const PARTICIPANTS = [
     name: "Cody Barnes",
     picks: {
       r32: ["Brazil", "Germany", "Netherlands", "Norway", "France", "Ecuador", "England", "Senegal", "USA", "Spain", "Croatia", "Switzerland", "Egypt", "Argentina", "Colombia"],
+      r16: ["Spain", "USA", "Argentina", "Switzerland", "England", "Norway", "Morocco", "France"],
       groups: null,
     },
   },
@@ -423,6 +447,7 @@ export const PARTICIPANTS = [
     name: "Ilija Topic",
     picks: {
       r32: [null, null, "Morocco", "Norway", "France", "Mexico", "England", "Senegal", "USA", "Spain", "Portugal", "Switzerland", "Egypt", "Argentina", "Colombia"],
+      r16: ["Spain", "Belgium", "Argentina", "Colombia", "England", "Norway", "Morocco", "France"],
       groups: {
       A: ["Mexico", "Korea Republic", "Czechia", "South Africa"],
       B: ["Switzerland", "Canada", "Bosnia", "Qatar"],
@@ -443,6 +468,7 @@ export const PARTICIPANTS = [
     name: "Juan Moreno",
     picks: {
       r32: ["Japan", "Germany", "Netherlands", "Cote d'Ivoire", "France", "Mexico", "England", "Belgium", "USA", "Spain", "Portugal", "Switzerland", "Australia", "Cabo Verde", "Colombia"],
+      r16: ["Spain", "USA", "Argentina", "Colombia", "England", "Norway", "Morocco", "France"],
       groups: {
       A: ["Mexico", "Korea Republic", "Czechia", "South Africa"],
       B: ["Canada", "Switzerland", "Qatar", "Bosnia"],
@@ -463,6 +489,7 @@ export const PARTICIPANTS = [
     name: "Aravind Radhakrishnan",
     picks: {
       r32: null,
+      r16: ["Spain", "Belgium", "Argentina", "Colombia", "England", "Norway", "Morocco", "France"],
       groups: {
       A: ["Czechia", "Korea Republic", "Mexico", "South Africa"],
       B: ["Switzerland", "Qatar", "Canada", "Bosnia"],
@@ -621,15 +648,47 @@ export const PARTICIPANTS = [
     name: "Kobi Umarbekov",
     picks: {
       r32: null,
+      r16: ["Spain", "Belgium", "Argentina", "Colombia", "England", "Norway", "Morocco", "France"],
       groups: {
       K: ["Portugal", "Uzbekistan", "Colombia", "DR Congo"],
     },
     },
   },
   {
+    name: "Vladimir Bankovic",
+    picks: {
+      r16: ["Spain", "Belgium", "Argentina", "Switzerland", "England", "Norway", "Morocco", "France"],
+    },
+  },
+  {
+    name: "Anmol Dogra",
+    picks: {
+      r16: ["Spain", "USA", "Argentina", "Colombia", "England", "Norway", "Morocco", "France"],
+    },
+  },
+  {
+    name: "Keith Gordon",
+    picks: {
+      r16: ["Portugal", "USA", "Egypt", "Colombia", "England", "Norway", "Morocco", "France"],
+    },
+  },
+  {
+    name: "Colleen Walsh",
+    picks: {
+      r16: ["Spain", "Belgium", "Argentina", "Colombia", "England", "Norway", "Morocco", "France"],
+    },
+  },
+  {
+    name: "Lucas Zallio",
+    picks: {
+      r16: ["Spain", "USA", "Argentina", "Colombia", "England", "Norway", "Morocco", "France"],
+    },
+  },
+  {
     name: "Kristina Butkovic",
     picks: {
       r32: null,
+      r16: ["Portugal", "Belgium", "Argentina", "Switzerland", "England", "Norway", "Morocco", "France"],
       groups: {
       A: ["Mexico", "Czechia", "Korea Republic", "South Africa"],
       B: ["Switzerland", "Bosnia", "Qatar", "Canada"],

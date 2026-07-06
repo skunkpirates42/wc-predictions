@@ -11,6 +11,16 @@ export function scoreR32(r32Picks, results) {
   }, 0);
 }
 
+// R16: +10 per correct winner pick. first 4 are regular matches (ids 15-18), last 4 are free points.
+export function scoreR16(r16Picks, results) {
+  if (!r16Picks) return 0;
+  return r16Picks.reduce((pts, pick, i) => {
+    const matchId = 15 + i;
+    if (!pick || !results[matchId]?.winner) return pts;
+    return pts + (pick === results[matchId].winner ? POINTS : 0);
+  }, 0);
+}
+
 // Groups: +10 per team in its exact final slot. Only complete groups are scored.
 // standings keyed by group letter -> { order: [1st,2nd,3rd,4th], complete: bool }.
 export function scoreGroups(groupPicks, standings) {
@@ -33,6 +43,7 @@ export function scoreGroups(groupPicks, standings) {
 
 export function scoreTotal(participant, { results, standings }) {
   const r32 = scoreR32(participant.picks.r32, results);
+  const r16 = scoreR16(participant.picks.r16, results);
   const groups = scoreGroups(participant.picks.groups, standings).total;
-  return { r32, groups, total: r32 + groups };
+  return { r32, r16, groups, total: r32 + r16 + groups };
 }

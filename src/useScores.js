@@ -3,11 +3,12 @@ import { normalize, findMatch, computeStandings } from "./standings.js";
 
 const ESPN_BASE =
   "https://site.api.espn.com/apis/site/v2/sports/soccer/fifa.world/scoreboard";
-// Round of 32: Jun 28 - Jul 4 (still live, polled on refresh)
+// Round of 32: Jun 28 - Jul 4; R16 (free + matches): Jul 5 - Jul 8
 const R32_DATES = [
   "20260628", "20260629", "20260630",
   "20260701", "20260702", "20260703", "20260704",
 ];
+const R16_DATES = ["20260705", "20260706", "20260707", "20260708"];
 // Group stage: Jun 11-27 (finished — fetched once, then cached)
 const GROUP_DATES = Array.from({ length: 17 }, (_, i) => String(20260611 + i));
 
@@ -40,13 +41,14 @@ export function useScores() {
     setLoading(true);
     setError(null);
     try {
-      // Group stage is over: fetch it once and reuse. Only R32 is polled live.
+      // Group stage is over: fetch it once and reuse. Only R32/R16 are polled live.
       if (!groupEventsRef.current) {
         const groupEvents = await fetchEvents(GROUP_DATES);
         if (groupEvents.length) groupEventsRef.current = groupEvents;
       }
       const r32Events = await fetchEvents(R32_DATES);
-      const allEvents = [...(groupEventsRef.current || []), ...r32Events];
+      const r16Events = await fetchEvents(R16_DATES);
+      const allEvents = [...(groupEventsRef.current || []), ...r32Events, ...r16Events];
       const newResults = {};
       const newLive = {};
       let anyLive = false;
