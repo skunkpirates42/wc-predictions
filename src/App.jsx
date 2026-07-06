@@ -138,9 +138,9 @@ export default function App() {
       <style>{`@keyframes pulse{0%,100%{opacity:1}50%{opacity:0.3}}`}</style>
 
       <div style={s.header}>
-        <h1 style={s.h1}>⚽ WC 2026 Predictions</h1>
+        <h1 style={s.h1}>⚽ ERG World Cup Predictions</h1>
         <p style={s.sub}>
-          Recharge Leaderboard · Group stage + Round of 32 + Round of 16
+          #erg-world-cup · Group stage + Round of 32 + Round of 16
         </p>
       </div>
 
@@ -167,7 +167,7 @@ export default function App() {
 
       {/* Tabs */}
       <div style={s.tabs}>
-        {["leaderboard", "my picks", "results", "analytics"].map((t) => (
+        {["leaderboard", "my picks", "results", "analytics", "about"].map((t) => (
           <button key={t} onClick={() => setTab(t)} style={s.tab(tab === t)}>
             {t.charAt(0).toUpperCase() + t.slice(1)}
           </button>
@@ -537,6 +537,96 @@ export default function App() {
         />
       )}
 
+      {/* ABOUT */}
+      {tab === "about" && (
+        <div style={{ fontSize: 13, lineHeight: 1.55, color: "#333" }}>
+          <img
+            src="/erg-world-cup-hype.png"
+            alt="ERG World Cup 2026 — join us, scoring, and road to glory"
+            style={{ width: "100%", height: "auto", borderRadius: 10, marginBottom: 16, display: "block" }}
+          />
+          <h2 style={{ fontSize: 16, fontWeight: 600, margin: "0 0 4px" }}>
+            Welcome to #erg-world-cup ⚽🌎
+          </h2>
+          <p style={{ color: "#555", margin: "0 0 16px" }}>
+            This channel is the home for all things Men's and Women's World Cup
+            at Recharge. While we're launching it for the 2026 Men's World Cup,
+            we'll keep using it for future tournaments — including the 2027
+            Women's World Cup and beyond.
+          </p>
+
+          <h3 style={{ fontSize: 14, fontWeight: 600, margin: "0 0 8px" }}>
+            🏆 Rules & Prize
+          </h3>
+          <div style={{ display: "grid", gap: 10, marginBottom: 20 }}>
+            <div style={{ padding: "10px 12px", background: "#f7f7f5", borderRadius: 8 }}>
+              <div style={{ fontWeight: 600, marginBottom: 4 }}>📋 How to play</div>
+              <div style={{ color: "#555" }}>
+                Build your bracket (FIFA's official predictor or type picks
+                manually) and post it in the round's thread. Pick early — you
+                can update right up until the first game of that round.
+              </div>
+            </div>
+            <div style={{ display: "flex", gap: 10 }}>
+              <div style={{ flex: 1, padding: "10px 12px", background: "#f7f7f5", borderRadius: 8, textAlign: "center" }}>
+                <div style={{ fontSize: 20, fontWeight: 700, color: "#3b6d11" }}>+10</div>
+                <div style={{ fontSize: 11, color: "#555" }}>correct match prediction</div>
+              </div>
+              <div style={{ flex: 1, padding: "10px 12px", background: "#f7f7f5", borderRadius: 8, textAlign: "center" }}>
+                <div style={{ fontSize: 20, fontWeight: 700, color: "#b8860b" }}>+50</div>
+                <div style={{ fontSize: 11, color: "#555" }}>correct tournament winner</div>
+              </div>
+            </div>
+            <div style={{ padding: "10px 12px", background: "#f7f7f5", borderRadius: 8 }}>
+              <div style={{ fontWeight: 600, marginBottom: 4 }}>👕 Prize</div>
+              <div style={{ color: "#555" }}>
+                Highest score at the end of the tournament wins a{" "}
+                <strong>jersey of their choice</strong>. Ties broken by final
+                score predictions — still tied, we spin the wheel. 🎡
+              </div>
+            </div>
+            <div style={{ padding: "10px 12px", background: "#f7f7f5", borderRadius: 8 }}>
+              <div style={{ fontWeight: 600, marginBottom: 4 }}>🗺️ Road to glory</div>
+              <div style={{ color: "#555" }}>
+                48 nations → 12 groups (A–L). Top two per group plus the 8 best
+                third-place teams advance. Then R32 → R16 → Quarters → Semis →
+                Final. One will be crowned champion.
+              </div>
+            </div>
+          </div>
+
+          <h3 style={{ fontSize: 14, fontWeight: 600, margin: "0 0 4px" }}>
+            🔎 A closer look at our communities
+          </h3>
+          <p style={{ color: "#555", margin: "0 0 12px" }}>
+            Ever wonder why the pitch is called "The Beautiful Game"? Because
+            these world-class icons represent all of us. Here are the stories
+            we're celebrating, tied to our ERGs:
+          </p>
+
+          <div style={{ display: "grid", gap: 12 }}>
+            {[
+              ["✊", "Latinx & Black ERGs", "Celebrating the legacy of Pelé and the modern dominance of stars like Vinícius Júnior, who use the pitch to fight systemic racism and prove that \"fútbol\" is a global language of resistance and joy."],
+              ["🌏", "APAC & Allies ERG", "From the tactical brilliance of South Korea and Japan to the heritage of Sam Kerr (Australian-Indian), honoring the massive influence of Asian nations on the modern game."],
+              ["🌈", "Pride & Allies ERG", "Standing with trailblazers like Megan Rapinoe and Sam Kerr, who made being \"out and proud\" a standard for elite athletics — proving you don't have to hide who you are to be a champion."],
+              ["⚽", "Women's ERG", "Highlighting the Women's World Cup icons who fought for — and won — equal pay, transforming women's sports from a \"niche\" interest into a billion-dollar global powerhouse."],
+              ["🧠", "Abilities at Recharge ERG", "Spotlighting \"Differently Powered\" athletes like Nacho Fernández (Type 1 Diabetes), showing that clinical diagnoses aren't obstacles — they're part of the elite athlete's journey."],
+            ].map(([emoji, title, body]) => (
+              <div key={title} style={{ padding: "10px 12px", background: "#f7f7f5", borderRadius: 8 }}>
+                <div style={{ fontWeight: 600, marginBottom: 2 }}>
+                  {emoji} {title}
+                </div>
+                <div style={{ color: "#555" }}>{body}</div>
+              </div>
+            ))}
+          </div>
+
+          <p style={{ fontSize: 11, color: "#aaa", marginTop: 16 }}>
+            Organized by Juan Moreno & Irving Osuna, with the Recharge ERGs. ⚽
+          </p>
+        </div>
+      )}
+
       <PlayerDrawer
         player={selectedPlayer}
         me={me}
@@ -549,6 +639,10 @@ export default function App() {
         comparing={comparing}
         setComparing={setComparing}
       />
+
+      <footer style={{ marginTop: 24, paddingTop: 12, borderTop: "1px solid #eee", fontSize: 11, color: "#aaa", textAlign: "center" }}>
+        Brought to you by the Recharge ERGs · #erg-world-cup 🌍⚽
+      </footer>
     </div>
   );
 }
