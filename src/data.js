@@ -1,28 +1,33 @@
 export const MATCHES = [
-  { id: 0, label: "Brazil vs Japan", t1: "Brazil", t2: "Japan" },
-  { id: 1, label: "Germany vs Paraguay", t1: "Germany", t2: "Paraguay" },
-  { id: 2, label: "Netherlands vs Morocco", t1: "Netherlands", t2: "Morocco" },
-  { id: 3, label: "Cote d'Ivoire vs Norway", t1: "Cote d'Ivoire", t2: "Norway" },
-  { id: 4, label: "France vs Sweden", t1: "France", t2: "Sweden" },
-  { id: 5, label: "Mexico vs Ecuador", t1: "Mexico", t2: "Ecuador" },
-  { id: 6, label: "England vs DR Congo", t1: "England", t2: "DR Congo" },
-  { id: 7, label: "Belgium vs Senegal", t1: "Belgium", t2: "Senegal" },
-  { id: 8, label: "USA vs Bosnia", t1: "USA", t2: "Bosnia" },
-  { id: 9, label: "Spain vs Austria", t1: "Spain", t2: "Austria" },
-  { id: 10, label: "Portugal vs Croatia", t1: "Portugal", t2: "Croatia" },
-  { id: 11, label: "Switzerland vs Algeria", t1: "Switzerland", t2: "Algeria" },
-  { id: 12, label: "Australia vs Egypt", t1: "Australia", t2: "Egypt" },
-  { id: 13, label: "Argentina vs Cabo Verde", t1: "Argentina", t2: "Cabo Verde" },
-  { id: 14, label: "Colombia vs Ghana", t1: "Colombia", t2: "Ghana" },
-  { id: 15, label: "Portugal vs Spain (R16)", t1: "Portugal", t2: "Spain" },
-  { id: 16, label: "USA vs Belgium (R16)", t1: "USA", t2: "Belgium" },
-  { id: 17, label: "Argentina vs Egypt (R16)", t1: "Argentina", t2: "Egypt" },
-  { id: 18, label: "Switzerland vs Colombia (R16)", t1: "Switzerland", t2: "Colombia" },
-  { id: 19, label: "Mexico vs England (R16 free)", t1: "Mexico", t2: "England" },
-  { id: 20, label: "Brazil vs Norway (R16 free)", t1: "Brazil", t2: "Norway" },
-  { id: 21, label: "Canada vs Morocco (R16 free)", t1: "Canada", t2: "Morocco" },
-  { id: 22, label: "Paraguay vs France (R16 free)", t1: "Paraguay", t2: "France" },
+  { id: 0, round: "r32", label: "Brazil vs Japan", t1: "Brazil", t2: "Japan" },
+  { id: 1, round: "r32", label: "Germany vs Paraguay", t1: "Germany", t2: "Paraguay" },
+  { id: 2, round: "r32", label: "Netherlands vs Morocco", t1: "Netherlands", t2: "Morocco" },
+  { id: 3, round: "r32", label: "Cote d'Ivoire vs Norway", t1: "Cote d'Ivoire", t2: "Norway" },
+  { id: 4, round: "r32", label: "France vs Sweden", t1: "France", t2: "Sweden" },
+  { id: 5, round: "r32", label: "Mexico vs Ecuador", t1: "Mexico", t2: "Ecuador" },
+  { id: 6, round: "r32", label: "England vs DR Congo", t1: "England", t2: "DR Congo" },
+  { id: 7, round: "r32", label: "Belgium vs Senegal", t1: "Belgium", t2: "Senegal" },
+  { id: 8, round: "r32", label: "USA vs Bosnia", t1: "USA", t2: "Bosnia" },
+  { id: 9, round: "r32", label: "Spain vs Austria", t1: "Spain", t2: "Austria" },
+  { id: 10, round: "r32", label: "Portugal vs Croatia", t1: "Portugal", t2: "Croatia" },
+  { id: 11, round: "r32", label: "Switzerland vs Algeria", t1: "Switzerland", t2: "Algeria" },
+  { id: 12, round: "r32", label: "Australia vs Egypt", t1: "Australia", t2: "Egypt" },
+  { id: 13, round: "r32", label: "Argentina vs Cabo Verde", t1: "Argentina", t2: "Cabo Verde" },
+  { id: 14, round: "r32", label: "Colombia vs Ghana", t1: "Colombia", t2: "Ghana" },
+  // R16 ids 15-22. First 4 are the picked matches (Mon/Tue); last 4 are the
+  // Sat/Sun games nobody submitted for — free points for everyone (see FREE_R16_IDS).
+  { id: 15, round: "r16", label: "Portugal vs Spain", t1: "Portugal", t2: "Spain" },
+  { id: 16, round: "r16", label: "USA vs Belgium", t1: "USA", t2: "Belgium" },
+  { id: 17, round: "r16", label: "Argentina vs Egypt", t1: "Argentina", t2: "Egypt" },
+  { id: 18, round: "r16", label: "Switzerland vs Colombia", t1: "Switzerland", t2: "Colombia" },
+  { id: 19, round: "r16", free: true, label: "Mexico vs England (free)", t1: "Mexico", t2: "England" },
+  { id: 20, round: "r16", free: true, label: "Brazil vs Norway (free)", t1: "Brazil", t2: "Norway" },
+  { id: 21, round: "r16", free: true, label: "Canada vs Morocco (free)", t1: "Canada", t2: "Morocco" },
+  { id: 22, round: "r16", free: true, label: "Paraguay vs France (free)", t1: "Paraguay", t2: "France" },
 ];
+
+export const R32_MATCHES = MATCHES.filter((m) => m.round === "r32");
+export const R16_MATCHES = MATCHES.filter((m) => m.round === "r16");
 
 export const GROUP_LETTERS = ["A", "B", "C", "D", "E", "F", "G", "H", "I", "J", "K", "L"];
 
@@ -243,6 +248,7 @@ export const PARTICIPANTS = [
     name: "James Blair",
     picks: {
       r32: ["Brazil", "Paraguay", "Netherlands", "Norway", "France", "Mexico", "England", "Belgium", "USA", "Spain", "Portugal", "Algeria", "Australia", "Argentina", "Colombia"],
+      r16: ["Spain", "Belgium", "Argentina", "Colombia", "England", "Norway", "Morocco", "France"],
       groups: {
       A: ["Mexico", "Korea Republic", "Czechia", "South Africa"],
       B: ["Switzerland", "Canada", "Qatar", "Bosnia"],
@@ -313,7 +319,6 @@ export const PARTICIPANTS = [
     name: "Daniel Woolridge",
     picks: {
       r32: ["Japan", "Germany", "Netherlands", "Norway", "France", "Mexico", "England", "Senegal", "USA", "Spain", "Portugal", "Algeria", "Egypt", "Argentina", "Ghana"],
-      r16: ["Spain", "Belgium", "Argentina", "Switzerland", "England", "Norway", "Morocco", "France"],
       groups: {
       A: ["Korea Republic", "Mexico", "Czechia", "South Africa"],
       B: ["Switzerland", "Qatar", "Bosnia", "Canada"],
@@ -355,7 +360,7 @@ export const PARTICIPANTS = [
     name: "Jose Delgado",
     picks: {
       r32: ["Brazil", "Germany", "Morocco", "Norway", "France", "Ecuador", "England", "Belgium", "USA", "Spain", "Portugal", "Algeria", "Egypt", "Argentina", "Colombia"],
-      r16: ["Spain", "Belgium", "Argentina", "Colombia", "England", "Norway", "Morocco", "France"],
+      r16: ["Portugal", "USA", "Argentina", "Colombia", "England", "Norway", "Morocco", "France"],
       groups: {
       A: ["Korea Republic", "Czechia", "South Africa", "Mexico"],
       B: ["Switzerland", "Canada", "Bosnia", "Qatar"],
@@ -397,7 +402,6 @@ export const PARTICIPANTS = [
     name: "Caitlan Shumaker",
     picks: {
       r32: ["Brazil", "Germany", "Morocco", "Norway", "France", "Mexico", "England", "Belgium", "USA", "Spain", "Portugal", "Algeria", "Egypt", "Argentina", "Colombia"],
-      r16: ["Spain", "Belgium", "Argentina", "Colombia", "England", "Norway", "Morocco", "France"],
       groups: {
       A: ["Mexico", "Korea Republic", "Czechia", "South Africa"],
       B: ["Canada", "Switzerland", "Qatar", "Bosnia"],
@@ -489,7 +493,7 @@ export const PARTICIPANTS = [
     name: "Aravind Radhakrishnan",
     picks: {
       r32: null,
-      r16: ["Spain", "Belgium", "Argentina", "Colombia", "England", "Norway", "Morocco", "France"],
+      r16: ["Portugal", "USA", "Argentina", "Switzerland", "England", "Norway", "Morocco", "France"],
       groups: {
       A: ["Czechia", "Korea Republic", "Mexico", "South Africa"],
       B: ["Switzerland", "Qatar", "Canada", "Bosnia"],
@@ -568,6 +572,7 @@ export const PARTICIPANTS = [
     name: "Eduardo Mallmann",
     picks: {
       r32: null,
+      r16: ["Spain", "Belgium", "Argentina", "Colombia", "England", "Norway", "Morocco", "France"],
       groups: {
       A: ["Mexico", "Korea Republic", "Czechia", "South Africa"],
       B: ["Switzerland", "Canada", "Bosnia", "Qatar"],

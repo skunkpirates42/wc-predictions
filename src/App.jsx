@@ -1,7 +1,7 @@
 import { useState } from "react";
-import { MATCHES, FLAGS, PARTICIPANTS } from "./data.js";
+import { R32_MATCHES, R16_MATCHES, FLAGS, PARTICIPANTS } from "./data.js";
 import { useScores } from "./useScores.js";
-import { scoreR32, scoreGroups } from "./scoring.js";
+import { scoreR32, scoreR16, scoreGroups, isFirstTimer } from "./scoring.js";
 import { s } from "./styles.js";
 import { GroupStandingsView, GroupPicksView } from "./GroupViews.jsx";
 import PlayerDrawer from "./PlayerDrawer.jsx";
@@ -110,16 +110,24 @@ export default function App() {
   const ranked = [...PARTICIPANTS]
     .map((p) => {
       const r32 = scoreR32(p.picks.r32, results);
+      const firstTimer = isFirstTimer(p);
+      const r16 = scoreR16(p.picks.r16, results, { firstTimer });
       const groups = scoreGroups(p.picks.groups, groupStandings).total;
-      return { ...p, r32Pts: r32, groupPts: groups, pts: r32 + groups };
+      return { ...p, r32Pts: r32, r16Pts: r16, firstTimer, groupPts: groups, pts: r32 + r16 + groups };
     })
     .sort((a, b) => b.pts - a.pts || a.name.localeCompare(b.name));
 
   const me = ranked.find((p) => p.name === myName);
 
-  // leaderboard scope: total (default) | groups | r32
+  // leaderboard scope: total (default) | groups | r32 | r16
   const scopeVal = (p) =>
-    boardScope === "groups" ? p.groupPts : boardScope === "r32" ? p.r32Pts : p.pts;
+    boardScope === "groups"
+      ? p.groupPts
+      : boardScope === "r32"
+        ? p.r32Pts
+        : boardScope === "r16"
+          ? p.r16Pts
+          : p.pts;
   const board = ranked
     .map((p) => ({ ...p, shown: scopeVal(p) }))
     .sort((a, b) => b.shown - a.shown || a.name.localeCompare(b.name));
@@ -132,7 +140,7 @@ export default function App() {
       <div style={s.header}>
         <h1 style={s.h1}>⚽ WC 2026 Predictions</h1>
         <p style={s.sub}>
-          Recharge Leaderboard · Group stage + Round of 32
+          Recharge Leaderboard · Group stage + Round of 32 + Round of 16
         </p>
       </div>
 
@@ -174,6 +182,7 @@ export default function App() {
               ["total", "Overall"],
               ["groups", "Group Stage"],
               ["r32", "Round of 32"],
+              ["r16", "Round of 16"],
             ].map(([key, label]) => (
               <button
                 key={key}
@@ -197,7 +206,9 @@ export default function App() {
                     ? " overall"
                     : boardScope === "groups"
                       ? " · group stage"
-                      : " · round of 32"}
+                      : boardScope === "r32"
+                        ? " · round of 32"
+                        : " · round of 16"}
                 </div>
               </div>
             </div>
@@ -235,8 +246,8 @@ export default function App() {
                   {isMe ? " (you)" : ""}
                 </span>
                 {boardScope === "total" && (
-                  <span style={{ fontSize: 11, color: "#888", minWidth: 96, textAlign: "right" }}>
-                    G {p.groupPts} · R32 {p.r32Pts}
+                  <span style={{ fontSize: 11, color: "#888", minWidth: 128, textAlign: "right" }}>
+                    G {p.groupPts} · R32 {p.r32Pts} · R16 {p.r16Pts}
                   </span>
                 )}
                 <span
@@ -262,6 +273,7 @@ export default function App() {
             {[
               ["groups", "Group Stage", !!me?.picks.groups],
               ["r32", "Round of 32", !!me?.picks.r32],
+              ["r16", "Round of 16", !!me?.picks.r16],
             ].map(([key, label, enabled]) => (
               <button
                 key={key}
@@ -282,10 +294,10 @@ export default function App() {
           )}
 
           {picksRound === "r32" &&
-            MATCHES.map((m, i) => {
+            R32_MATCHES.map((m, i) => {
             const myPick = me?.picks.r32?.[i];
-            const result = results[i];
-            const live = liveScores[i];
+            const result = results[m.id];
+            const live = liveScores[m.id];
             const correct = result && myPick === result.winner;
             const wrong = result && myPick !== result.winner;
 
@@ -321,7 +333,57 @@ export default function App() {
             );
           })}
 
-          {picksRound === "r32" && (
+          {picksRound === "r16" &&
+            R16_MATCHES.map((m, i) => {
+            const myPick = me?.picks.r16?.[i];
+            const result = results[m.id];
+            const live = liveScores[m.id];
+            // free matches score for everyone regardless of pick
+            const correct = result && (m.free || myPick === result.winner);
+            const wrong = result && !m.free && myPick !== result.winner;
+
+            return (
+              <div key={m.id} style={s.pickRow(correct, wrong)}>
+                <span style={{ fontSize: 12, color: "#666", flex: 1 }}>
+                  {m.label}
+                </span>
+                {m.free && (
+                  <span style={{ fontSize: 10, color: "#3b6d11", fontWeight: 600 }}>
+                    FREE
+                  </span>
+                )}
+                {live && (
+                  <span style={{ fontSize: 11, color: "#e53935" }}>
+                    <LiveDot />
+                    {live.homeScore}–{live.awayScore} {live.clock}'
+                  </span>
+                )}
+                <span style={{ fontSize: 12 }}>
+                  {m.free
+                    ? result
+                      ? `${FLAGS[result.winner] || ""} ${result.winner}`
+                      : "—"
+                    : `${FLAGS[myPick] || ""} ${myPick || "—"}`}
+                </span>
+                {result && (
+                  <span
+                    style={{
+                      fontSize: 13,
+                      fontWeight: "bold",
+                      color: correct ? "#3b6d11" : "#a32d2d",
+                    }}
+                  >
+                    {correct ? "✓" : "✗"}
+                  </span>
+                )}
+                {!result && !live && (
+                  <span style={{ fontSize: 11, color: "#ccc" }}>pending</span>
+                )}
+              </div>
+            );
+          })}
+
+          {(picksRound === "r32" || picksRound === "r16") && (
             <div
               style={{
                 marginTop: 8,
@@ -333,10 +395,15 @@ export default function App() {
               }}
             >
               <span style={{ fontSize: 12, color: "#888" }}>
-                Total R32 points
+                Total {picksRound === "r16" ? "R16" : "R32"} points
+                {picksRound === "r16" && me?.firstTimer && (
+                  <span style={{ color: "#3b6d11", fontWeight: 600 }}>
+                    {" "}· first-timer: 2× if all 4 correct
+                  </span>
+                )}
               </span>
               <span style={{ fontSize: 14, fontWeight: 600 }}>
-                {me?.r32Pts ?? 0} pts
+                {(picksRound === "r16" ? me?.r16Pts : me?.r32Pts) ?? 0} pts
               </span>
             </div>
           )}
@@ -350,7 +417,7 @@ export default function App() {
             {[
               ["groups", "Groups", true],
               ["r32", "R32", true],
-              ["r16", "R16", false],
+              ["r16", "R16", true],
               ["qf", "QF", false],
               ["sf", "SF", false],
               ["final", "Final", false],
@@ -370,19 +437,19 @@ export default function App() {
             <GroupStandingsView standings={groupStandings} />
           )}
 
-          {["r16", "qf", "sf", "final"].includes(resultsRound) && (
+          {["qf", "sf", "final"].includes(resultsRound) && (
             <div style={{ fontSize: 13, color: "#aaa", padding: "16px 2px", textAlign: "center" }}>
               Not started yet — picks &amp; results appear here once this round begins.
             </div>
           )}
 
-          {resultsRound === "r32" && (
+          {(resultsRound === "r32" || resultsRound === "r16") && (
           <div>
           <p style={{ fontSize: 12, color: "#888", margin: "0 0 10px" }}>
             Results are fetched automatically from ESPN. Use buttons to manually
             override if needed.
           </p>
-          {MATCHES.map((m) => {
+          {(resultsRound === "r16" ? R16_MATCHES : R32_MATCHES).map((m) => {
             const result = results[m.id];
             const live = liveScores[m.id];
             const status = live ? "live" : result ? "final" : "pending";
@@ -474,7 +541,6 @@ export default function App() {
         player={selectedPlayer}
         me={me}
         results={results}
-        matches={MATCHES}
         groupStandings={groupStandings}
         onClose={() => {
           setSelectedPlayer(null);

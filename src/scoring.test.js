@@ -1,6 +1,6 @@
 import { test } from "node:test";
 import assert from "node:assert/strict";
-import { scoreR32, scoreGroups, scoreTotal } from "./scoring.js";
+import { scoreR32, scoreR16, scoreGroups, scoreTotal, isFirstTimer } from "./scoring.js";
 
 test("scoreR32 counts correct winners at +10", () => {
   const results = {
@@ -16,6 +16,61 @@ test("scoreR32 ignores null picks and undecided matches", () => {
   assert.equal(scoreR32([null, "Germany"], results), 10);
   assert.equal(scoreR32(["Brazil"], {}), 0);
   assert.equal(scoreR32(null, results), 0);
+});
+
+test("scoreR16 scores picked matches and awards free matches to everyone", () => {
+  // ids 15-18 picked, 19-22 free. picks index-aligned to R16_MATCHES (8 entries).
+  const picks = ["Spain", "Belgium", "Argentina", "Colombia", "England", "Norway", "Morocco", "France"];
+  // Spain right, Belgium wrong, Argentina right, Colombia not decided
+  const results = {
+    15: { winner: "Spain" },
+    16: { winner: "USA" },
+    17: { winner: "Argentina" },
+    // 4 free matches decided — winner irrelevant to the free award
+    19: { winner: "England" },
+    20: { winner: "Brazil" },
+    21: { winner: "Canada" },
+    22: { winner: "Paraguay" },
+  };
+  // 2 picked correct (Spain, Argentina) + 4 free = 6 * 10 = 60
+  assert.equal(scoreR16(picks, results), 60);
+});
+
+test("scoreR16 awards free matches to non-submitters but no picked-match points", () => {
+  // no r16 submission: only the 4 free matches score
+  const results = {
+    15: { winner: "Spain" }, // picked match — ignored, no submission
+    19: { winner: "England" }, 20: { winner: "Brazil" },
+    21: { winner: "Canada" }, 22: { winner: "Paraguay" },
+  };
+  assert.equal(scoreR16(null, results), 40); // 4 free only
+  assert.equal(scoreR16(null, {}), 0); // nothing decided
+});
+
+test("scoreR16 doubles a first-timer's total only when all 4 real picks are correct", () => {
+  const picks = ["Spain", "Belgium", "Argentina", "Colombia", "England", "Norway", "Morocco", "France"];
+  const allReal = {
+    15: { winner: "Spain" }, 16: { winner: "Belgium" },
+    17: { winner: "Argentina" }, 18: { winner: "Colombia" },
+    19: { winner: "England" }, // one free decided
+  };
+  // 4 real correct (40) + 1 free (10) = 50, doubled = 100
+  assert.equal(scoreR16(picks, allReal, { firstTimer: true }), 100);
+  // non-first-timer: no doubling
+  assert.equal(scoreR16(picks, allReal, { firstTimer: false }), 50);
+  // first-timer but one real wrong: no doubling
+  const oneWrong = { ...allReal, 18: { winner: "Switzerland" } };
+  assert.equal(scoreR16(picks, oneWrong, { firstTimer: true }), 40);
+  // first-timer, not all 4 real decided yet: no doubling
+  const partial = { 15: { winner: "Spain" }, 16: { winner: "Belgium" } };
+  assert.equal(scoreR16(picks, partial, { firstTimer: true }), 20);
+});
+
+test("isFirstTimer flags participants whose first round is R16", () => {
+  assert.equal(isFirstTimer({ picks: { r16: ["Spain"] } }), true);
+  assert.equal(isFirstTimer({ picks: { r16: ["Spain"], r32: ["Brazil"] } }), false);
+  assert.equal(isFirstTimer({ picks: { r16: ["Spain"], groups: {} } }), false);
+  assert.equal(isFirstTimer({ picks: { r32: ["Brazil"] } }), false);
 });
 
 const standings = {

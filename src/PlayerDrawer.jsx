@@ -1,9 +1,9 @@
 import { useState } from "react";
-import { FLAGS, GROUP_LETTERS } from "./data.js";
+import { FLAGS, GROUP_LETTERS, R32_MATCHES, R16_MATCHES } from "./data.js";
 import { s } from "./styles.js";
 import { GroupPicksView } from "./GroupViews.jsx";
 
-export default function PlayerDrawer({ player, me, results, matches, groupStandings, onClose, comparing, setComparing }) {
+export default function PlayerDrawer({ player, me, results, groupStandings, onClose, comparing, setComparing }) {
   const [round, setRound] = useState("r32");
   if (!player) return null;
   const isOther = me && player.name !== me.name;
@@ -15,8 +15,14 @@ export default function PlayerDrawer({ player, me, results, matches, groupStandi
     round === "groups" && !pGroups
       ? "r32"
       : round === "r32" && !player.picks.r32
-        ? "groups"
-        : round;
+        ? player.picks.r16
+          ? "r16"
+          : "groups"
+        : round === "r16" && !player.picks.r16
+          ? "r32"
+          : round;
+  const bracketMatches = activeRound === "r16" ? R16_MATCHES : R32_MATCHES;
+  const bracketKey = activeRound === "r16" ? "r16" : "r32";
 
   return (
     <div style={{
@@ -36,7 +42,7 @@ export default function PlayerDrawer({ player, me, results, matches, groupStandi
           <div style={{ flex: 1 }}>
             <div style={{ fontSize: 16, fontWeight: 600 }}>{player.name}</div>
             <div style={{ fontSize: 12, color: '#888' }}>
-              {player.pts} pts · G {player.groupPts ?? 0} · R32 {player.r32Pts ?? 0}
+              {player.pts} pts · G {player.groupPts ?? 0} · R32 {player.r32Pts ?? 0} · R16 {player.r16Pts ?? 0}
             </div>
           </div>
           {isOther && (
@@ -61,6 +67,7 @@ export default function PlayerDrawer({ player, me, results, matches, groupStandi
           {[
             ["groups", "Group Stage", !!pGroups],
             ["r32", "Round of 32", !!player.picks.r32],
+            ["r16", "Round of 16", !!player.picks.r16],
           ].map(([key, label, enabled]) => (
             <button
               key={key}
@@ -73,8 +80,8 @@ export default function PlayerDrawer({ player, me, results, matches, groupStandi
           ))}
         </div>
 
-        {/* R32 */}
-        {activeRound === "r32" && (
+        {/* R32 / R16 bracket */}
+        {(activeRound === "r32" || activeRound === "r16") && (
           <>
             {showCompare && (
               <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr 1fr', gap: 4, marginBottom: 6 }}>
@@ -83,15 +90,18 @@ export default function PlayerDrawer({ player, me, results, matches, groupStandi
                 <div style={{ fontSize: 11, color: '#888', textAlign: 'center' }}>{me.name.split(' ')[0]} (you)</div>
               </div>
             )}
-            {matches.map((m, i) => {
-              const pick = player.picks.r32?.[i];
-              const mePick = me?.picks.r32?.[i];
-              const result = results[i]?.winner;
-              const pickCorrect = pick && result && pick === result;
-              const pickWrong = pick && result && pick !== result;
-              const meCorrect = mePick && result && mePick === result;
-              const meWrong = mePick && result && mePick !== result;
+            {bracketMatches.map((m, i) => {
+              const pick = player.picks[bracketKey]?.[i];
+              const mePick = me?.picks[bracketKey]?.[i];
+              const result = results[m.id]?.winner;
+              // free matches count as correct for everyone once decided
+              const pickCorrect = result && (m.free || (pick && pick === result));
+              const pickWrong = result && !m.free && pick && pick !== result;
+              const meCorrect = result && (m.free || (mePick && mePick === result));
+              const meWrong = result && !m.free && mePick && mePick !== result;
               const agree = pick && mePick && pick === mePick;
+              const pickLabel = m.free ? (result || '—') : (pick || '—');
+              const meLabel = m.free ? (result || '—') : (mePick || '—');
 
               if (showCompare) {
                 return (
@@ -102,12 +112,12 @@ export default function PlayerDrawer({ player, me, results, matches, groupStandi
                     <div style={{ fontSize: 12, color: '#666' }}>{m.label}</div>
                     <div style={{ fontSize: 12, textAlign: 'center', fontWeight: 500,
                       color: pickCorrect ? '#3b6d11' : pickWrong ? '#a32d2d' : '#333' }}>
-                      {pick || '—'} {pickCorrect ? '✓' : pickWrong ? '✗' : ''}
+                      {pickLabel} {pickCorrect ? '✓' : pickWrong ? '✗' : ''}
                     </div>
                     <div style={{ fontSize: 12, textAlign: 'center', fontWeight: 500,
                       color: meCorrect ? '#3b6d11' : meWrong ? '#a32d2d' : '#333',
                       background: agree ? '#fffbe6' : 'transparent', borderRadius: 4 }}>
-                      {mePick || '—'} {meCorrect ? '✓' : meWrong ? '✗' : ''}
+                      {meLabel} {meCorrect ? '✓' : meWrong ? '✗' : ''}
                     </div>
                   </div>
                 );
@@ -119,7 +129,7 @@ export default function PlayerDrawer({ player, me, results, matches, groupStandi
                   background: pickCorrect ? '#eaf3de' : pickWrong ? '#fcebeb' : '#fafafa',
                 }}>
                   <span style={{ fontSize: 12, color: '#666', flex: 1 }}>{m.label}</span>
-                  <span style={{ fontSize: 12, fontWeight: 500 }}>{pick || '—'}</span>
+                  <span style={{ fontSize: 12, fontWeight: 500 }}>{pickLabel}</span>
                   {result && (
                     <span style={{ fontSize: 13, fontWeight: 'bold', color: pickCorrect ? '#3b6d11' : '#a32d2d' }}>
                       {pickCorrect ? '✓' : '✗'}

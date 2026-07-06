@@ -1,5 +1,20 @@
-import { GROUPS } from "./data.js";
-import { scoreGroups } from "./scoring.js";
+import { GROUPS, MATCHES } from "./data.js";
+import { scoreGroups, scoreR32, scoreR16, isFirstTimer } from "./scoring.js";
+
+// result id -> { round, idx (position within that round's pick array), free }
+const MATCH_BY_ID = {};
+MATCHES.forEach((m) => {
+  const idx = MATCHES.filter((x) => x.round === m.round).indexOf(m);
+  MATCH_BY_ID[m.id] = { round: m.round, idx, free: !!m.free };
+});
+
+// Did this participant earn points for a decided bracket match?
+function bracketHit(participant, id, winner) {
+  const info = MATCH_BY_ID[id];
+  if (!info || !winner) return false;
+  if (info.free) return true; // free matches score for everyone
+  return participant.picks[info.round]?.[info.idx] === winner;
+}
 
 // Cumulative points + rank per participant across the tournament timeline.
 // Timeline points are the dates things actually score: each group's completion
@@ -22,13 +37,17 @@ export function buildTimeline(participants, results, standings) {
         if (st?.complete && st.completeDate && st.completeDate <= d)
           stUpTo[L] = st;
       }
-      let pts = scoreGroups(p.picks.groups, stUpTo).total;
-      // r32 matches decided on or before this date
+      // results decided on or before this date — reuse the scorers so the
+      // first-timer R16 doubling lands exactly as it does on the leaderboard.
+      const resUpTo = {};
       for (const [id, r] of Object.entries(results)) {
-        if (r?.date && r.date <= d && r.winner && p.picks.r32?.[id] === r.winner)
-          pts += 10;
+        if (r?.date && r.date <= d) resUpTo[id] = r;
       }
-      return pts;
+      return (
+        scoreGroups(p.picks.groups, stUpTo).total +
+        scoreR32(p.picks.r32, resUpTo) +
+        scoreR16(p.picks.r16, resUpTo, { firstTimer: isFirstTimer(p) })
+      );
     });
     return { name: p.name, cum, rank: [] };
   });
@@ -47,24 +66,32 @@ export function buildTimeline(participants, results, standings) {
 
 // Correct-pick counts per round for one participant, vs the field average.
 export function accuracyByRound(participant, participants, results, standings) {
-  const r32Correct = (picks) =>
-    (picks || []).filter(
-      (pk, i) => pk && results[i]?.winner && pk === results[i].winner,
-    ).length;
+  // decided match ids per round
+  const decided = (round) =>
+    MATCHES.filter((m) => m.round === round && results[m.id]?.winner);
+  const bracketCorrect = (participant, round) =>
+    decided(round).filter((m) => bracketHit(participant, m.id, results[m.id].winner)).length;
   const groupCorrect = (picks) => scoreGroups(picks, standings).total / 10;
 
-  const r32Total = Object.values(results).filter((r) => r?.winner).length;
+  const r32Total = decided("r32").length;
+  const r16Total = decided("r16").length;
   const groupTotal = Object.values(standings).filter((s) => s?.complete).length * 4;
 
   const withR32 = participants.filter((p) => p.picks.r32);
+  const withR16 = participants.filter((p) => p.picks.r16);
   const withGroups = participants.filter((p) => p.picks.groups);
   const avg = (arr, f) => (arr.length ? arr.reduce((s, p) => s + f(p), 0) / arr.length : 0);
 
   return {
     r32: {
-      you: r32Correct(participant.picks.r32),
-      avg: avg(withR32, (p) => r32Correct(p.picks.r32)),
+      you: bracketCorrect(participant, "r32"),
+      avg: avg(withR32, (p) => bracketCorrect(p, "r32")),
       total: r32Total,
+    },
+    r16: {
+      you: bracketCorrect(participant, "r16"),
+      avg: avg(withR16, (p) => bracketCorrect(p, "r16")),
+      total: r16Total,
     },
     groups: {
       you: groupCorrect(participant.picks.groups),
