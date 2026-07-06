@@ -319,6 +319,7 @@ export const PARTICIPANTS = [
     name: "Daniel Woolridge",
     picks: {
       r32: ["Japan", "Germany", "Netherlands", "Norway", "France", "Mexico", "England", "Senegal", "USA", "Spain", "Portugal", "Algeria", "Egypt", "Argentina", "Ghana"],
+      r16: ["Portugal", "USA", "Argentina", "Colombia", "England", "Norway", "Morocco", "France"],
       groups: {
       A: ["Korea Republic", "Mexico", "Czechia", "South Africa"],
       B: ["Switzerland", "Qatar", "Bosnia", "Canada"],
@@ -402,6 +403,7 @@ export const PARTICIPANTS = [
     name: "Caitlan Shumaker",
     picks: {
       r32: ["Brazil", "Germany", "Morocco", "Norway", "France", "Mexico", "England", "Belgium", "USA", "Spain", "Portugal", "Algeria", "Egypt", "Argentina", "Colombia"],
+      r16: ["Spain", "USA", "Argentina", "Colombia", "England", "Norway", "Morocco", "France"],
       groups: {
       A: ["Mexico", "Korea Republic", "Czechia", "South Africa"],
       B: ["Canada", "Switzerland", "Qatar", "Bosnia"],
