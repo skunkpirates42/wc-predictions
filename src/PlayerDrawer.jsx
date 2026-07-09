@@ -1,5 +1,5 @@
 import { useState } from "react";
-import { FLAGS, GROUP_LETTERS, R32_MATCHES, R16_MATCHES } from "./data.js";
+import { FLAGS, GROUP_LETTERS, R32_MATCHES, R16_MATCHES, QF_MATCHES } from "./data.js";
 import { s } from "./styles.js";
 import { GroupPicksView } from "./GroupViews.jsx";
 
@@ -11,18 +11,22 @@ export default function PlayerDrawer({ player, me, results, groupStandings, onCl
   const pGroups = player.picks.groups;
   const myGroups = me?.picks.groups;
   // fall back to whichever round the player actually has
-  const activeRound =
-    round === "groups" && !pGroups
-      ? "r32"
-      : round === "r32" && !player.picks.r32
-        ? player.picks.r16
-          ? "r16"
-          : "groups"
-        : round === "r16" && !player.picks.r16
-          ? "r32"
-          : round;
-  const bracketMatches = activeRound === "r16" ? R16_MATCHES : R32_MATCHES;
-  const bracketKey = activeRound === "r16" ? "r16" : "r32";
+  const has = {
+    groups: !!pGroups,
+    r32: !!player.picks.r32,
+    r16: !!player.picks.r16,
+    qf: !!player.picks.qf,
+  };
+  const activeRound = has[round]
+    ? round
+    : ["groups", "r32", "r16", "qf"].find((r) => has[r]) || round;
+  const bracketMatches =
+    activeRound === "qf"
+      ? QF_MATCHES
+      : activeRound === "r16"
+        ? R16_MATCHES
+        : R32_MATCHES;
+  const bracketKey = activeRound === "qf" ? "qf" : activeRound === "r16" ? "r16" : "r32";
 
   return (
     <div style={{
@@ -42,7 +46,7 @@ export default function PlayerDrawer({ player, me, results, groupStandings, onCl
           <div style={{ flex: 1 }}>
             <div style={{ fontSize: 16, fontWeight: 600 }}>{player.name}</div>
             <div style={{ fontSize: 12, color: '#888' }}>
-              {player.pts} pts · G {player.groupPts ?? 0} · R32 {player.r32Pts ?? 0} · R16 {player.r16Pts ?? 0}
+              {player.pts} pts · G {player.groupPts ?? 0} · R32 {player.r32Pts ?? 0} · R16 {player.r16Pts ?? 0} · QF {player.qfPts ?? 0}
             </div>
           </div>
           {isOther && (
@@ -68,6 +72,7 @@ export default function PlayerDrawer({ player, me, results, groupStandings, onCl
             ["groups", "Group Stage", !!pGroups],
             ["r32", "Round of 32", !!player.picks.r32],
             ["r16", "Round of 16", !!player.picks.r16],
+            ["qf", "Quarter-finals", !!player.picks.qf],
           ].map(([key, label, enabled]) => (
             <button
               key={key}
@@ -81,7 +86,7 @@ export default function PlayerDrawer({ player, me, results, groupStandings, onCl
         </div>
 
         {/* R32 / R16 bracket */}
-        {(activeRound === "r32" || activeRound === "r16") && (
+        {(activeRound === "r32" || activeRound === "r16" || activeRound === "qf") && (
           <>
             {showCompare && (
               <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr 1fr', gap: 4, marginBottom: 6 }}>
