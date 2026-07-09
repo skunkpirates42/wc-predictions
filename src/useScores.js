@@ -1,32 +1,8 @@
-import { useState, useEffect, useCallback, useRef } from "react";
+import { useState, useEffect, useCallback } from "react";
 import { normalize, findMatch, computeStandings } from "./standings.js";
 
-const ESPN_BASE =
-  "https://site.api.espn.com/apis/site/v2/sports/soccer/fifa.world/scoreboard";
-// Round of 32: Jun 28 - Jul 4; R16 (free + matches): Jul 5 - Jul 8
-const R32_DATES = [
-  "20260628", "20260629", "20260630",
-  "20260701", "20260702", "20260703", "20260704",
-];
-const R16_DATES = ["20260705", "20260706", "20260707", "20260708"];
-// Group stage: Jun 11-27 (finished — fetched once, then cached)
-const GROUP_DATES = Array.from({ length: 17 }, (_, i) => String(20260611 + i));
-
-async function fetchEvents(dates) {
-  const responses = await Promise.all(
-    dates.map((date) =>
-      fetch(`${ESPN_BASE}?dates=${date}&limit=30`)
-        .then((r) => r.json())
-        .catch(() => null),
-    ),
-  );
-  const seen = new Set();
-  return responses
-    .filter(Boolean)
-    .flatMap((d) => d.events || [])
-    .filter((e) => (seen.has(e.id) ? false : (seen.add(e.id), true)));
-}
-
+// Server route fetches ESPN, caches finished results in KV, and serves the
+// merged event list. Finals survive ESPN outages; live/pending are fresh.
 export function useScores() {
   const [results, setResults] = useState({});
   const [liveScores, setLiveScores] = useState({});
@@ -35,20 +11,13 @@ export function useScores() {
   const [error, setError] = useState(null);
   const [lastUpdated, setLastUpdated] = useState(null);
   const [hasLive, setHasLive] = useState(false);
-  const groupEventsRef = useRef(null); // group stage is final — cache after first fetch
 
   const fetch_scores = useCallback(async () => {
     setLoading(true);
     setError(null);
     try {
-      // Group stage is over: fetch it once and reuse. Only R32/R16 are polled live.
-      if (!groupEventsRef.current) {
-        const groupEvents = await fetchEvents(GROUP_DATES);
-        if (groupEvents.length) groupEventsRef.current = groupEvents;
-      }
-      const r32Events = await fetchEvents(R32_DATES);
-      const r16Events = await fetchEvents(R16_DATES);
-      const allEvents = [...(groupEventsRef.current || []), ...r32Events, ...r16Events];
+      const resp = await fetch("/api/scoreboard");
+      const { events: allEvents } = await resp.json();
       const newResults = {};
       const newLive = {};
       let anyLive = false;
@@ -106,6 +75,7 @@ export function useScores() {
             homeName,
             awayName,
             winner: winnerKey,
+            isPens: statusName === "STATUS_SHOOTOUT",
           };
         } else if (isFinal) {
           newResults[match.id] = {
@@ -114,6 +84,8 @@ export function useScores() {
             awayScore,
             isPens,
             isAET,
+            homeShootout: home.shootoutScore,
+            awayShootout: away.shootoutScore,
             date: (event.date || "").slice(0, 10),
           };
         }
