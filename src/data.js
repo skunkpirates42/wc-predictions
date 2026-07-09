@@ -713,6 +713,7 @@ export const PARTICIPANTS = [
   {
     name: "Lucas Zallio",
     picks: {
+      qf: ["France", "Spain", "Norway", "Argentina"],
       r16: ["Spain", "USA", "Argentina", "Colombia", "England", "Norway", "Morocco", "France"],
     },
   },
