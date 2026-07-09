@@ -105,8 +105,9 @@ export default function PlayerDrawer({ player, me, results, groupStandings, onCl
               const meCorrect = result && (m.free || (mePick && mePick === result));
               const meWrong = result && !m.free && mePick && mePick !== result;
               const agree = pick && mePick && pick === mePick;
-              const pickLabel = m.free ? (result || '—') : (pick || '—');
-              const meLabel = m.free ? (result || '—') : (mePick || '—');
+              const withFlag = (t) => (t && FLAGS[t] ? `${FLAGS[t]} ${t}` : t || '—');
+              const pickLabel = withFlag(m.free ? result : pick);
+              const meLabel = withFlag(m.free ? result : mePick);
 
               if (showCompare) {
                 return (
@@ -177,13 +178,13 @@ export default function PlayerDrawer({ player, me, results, groupStandings, onCl
                     const agree = pt && mt && pt === mt;
                     return (
                       <div key={i} style={{ display: 'grid', gridTemplateColumns: '1fr 1fr 1fr', gap: 4, padding: '4px 0' }}>
-                        <div style={{ fontSize: 11, color: '#999' }}>{i + 1}{st?.complete ? ` ${actual}` : ''}</div>
+                        <div style={{ fontSize: 11, color: '#999' }}>{i + 1}{st?.complete ? ` ${FLAGS[actual] || ''} ${actual}` : ''}</div>
                         <div style={{ fontSize: 12, textAlign: 'center', color: pc ? '#3b6d11' : pw ? '#a32d2d' : '#333' }}>
-                          {pt || '—'} {pc ? '✓' : pw ? '✗' : ''}
+                          {pt ? `${FLAGS[pt] || ''} ${pt}` : '—'} {pc ? '✓' : pw ? '✗' : ''}
                         </div>
                         <div style={{ fontSize: 12, textAlign: 'center', color: mc ? '#3b6d11' : mw ? '#a32d2d' : '#333',
                           background: agree ? '#fffbe6' : 'transparent', borderRadius: 4 }}>
-                          {mt || '—'} {mc ? '✓' : mw ? '✗' : ''}
+                          {mt ? `${FLAGS[mt] || ''} ${mt}` : '—'} {mc ? '✓' : mw ? '✗' : ''}
                         </div>
                       </div>
                     );
