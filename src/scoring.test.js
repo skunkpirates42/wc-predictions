@@ -1,6 +1,7 @@
 import { test } from "node:test";
 import assert from "node:assert/strict";
-import { scoreR32, scoreR16, scoreGroups, scoreTotal, isFirstTimer } from "./scoring.js";
+import { scoreR32, scoreR16, scoreQF, scoreGroups, scoreTotal, isFirstTimer } from "./scoring.js";
+import { QF_MATCHES } from "./data.js";
 
 test("scoreR32 counts correct winners at +10", () => {
   const results = {
@@ -98,6 +99,19 @@ test("scoreGroups skips incomplete groups and missing/null picks", () => {
   assert.equal(scoreGroups(null, standings).total, 0);
 });
 
+test("scoreQF scores +10 per correct winner, index-aligned to QF_MATCHES", () => {
+  const [q1, q2, q3, q4] = QF_MATCHES.map((m) => m.id);
+  const results = {
+    [q1]: { winner: "France" },
+    [q2]: { winner: "Belgium" },
+    [q3]: { winner: "Norway" },
+    // q4 undecided
+  };
+  // France ✓, Spain ✗, Norway ✓, Argentina (undecided) → 20
+  assert.equal(scoreQF(["France", "Spain", "Norway", "Argentina"], results), 20);
+  assert.equal(scoreQF(null, results), 0);
+});
+
 test("scoreTotal sums both rounds", () => {
   const p = {
     picks: {
@@ -106,5 +120,5 @@ test("scoreTotal sums both rounds", () => {
     },
   };
   const res = scoreTotal(p, { results: { 0: { winner: "Brazil" } }, standings });
-  assert.deepEqual(res, { r32: 10, r16: 0, groups: 40, total: 50 });
+  assert.deepEqual(res, { r32: 10, r16: 0, qf: 0, groups: 40, total: 50 });
 });

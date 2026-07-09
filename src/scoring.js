@@ -1,4 +1,4 @@
-import { GROUPS, R16_MATCHES } from "./data.js";
+import { GROUPS, R16_MATCHES, QF_MATCHES } from "./data.js";
 
 const POINTS = 10;
 
@@ -45,6 +45,17 @@ export function scoreR16(r16Picks, results, { firstTimer = false } = {}) {
   return firstTimer && perfect ? base * 2 : base;
 }
 
+// QF: +10 per correct winner pick, index-aligned to QF_MATCHES. No free
+// matches, no first-timer bonus — straight knockout scoring.
+export function scoreQF(qfPicks, results) {
+  if (!qfPicks) return 0;
+  return QF_MATCHES.reduce((pts, m, i) => {
+    const res = results[m.id];
+    if (!res?.winner) return pts;
+    return pts + (qfPicks[i] === res.winner ? POINTS : 0);
+  }, 0);
+}
+
 // Groups: +10 per team in its exact final slot. Only complete groups are scored.
 // standings keyed by group letter -> { order: [1st,2nd,3rd,4th], complete: bool }.
 export function scoreGroups(groupPicks, standings) {
@@ -68,6 +79,7 @@ export function scoreGroups(groupPicks, standings) {
 export function scoreTotal(participant, { results, standings }) {
   const r32 = scoreR32(participant.picks.r32, results);
   const r16 = scoreR16(participant.picks.r16, results, { firstTimer: isFirstTimer(participant) });
+  const qf = scoreQF(participant.picks.qf, results);
   const groups = scoreGroups(participant.picks.groups, standings).total;
-  return { r32, r16, groups, total: r32 + r16 + groups };
+  return { r32, r16, qf, groups, total: r32 + r16 + qf + groups };
 }
