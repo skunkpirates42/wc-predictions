@@ -115,7 +115,9 @@ export default function PlayerDrawer({ player, me, results, groupStandings, onCl
                     display: 'grid', gridTemplateColumns: '1fr 1fr 1fr',
                     gap: 4, padding: '7px 0', borderBottom: '0.5px solid #f0f0f0',
                   }}>
-                    <div style={{ fontSize: 12, color: '#666' }}>{m.label}</div>
+                    <div style={{ fontSize: 12, color: '#666' }}>
+                      {FLAGS[m.t1] || ''} {m.t1} vs {FLAGS[m.t2] || ''} {m.t2}
+                    </div>
                     <div style={{ fontSize: 12, textAlign: 'center', fontWeight: 500,
                       color: pickCorrect ? '#3b6d11' : pickWrong ? '#a32d2d' : '#333' }}>
                       {pickLabel} {pickCorrect ? '✓' : pickWrong ? '✗' : ''}
@@ -134,7 +136,9 @@ export default function PlayerDrawer({ player, me, results, groupStandings, onCl
                   padding: '7px 10px', marginBottom: 4, borderRadius: 8,
                   background: pickCorrect ? '#eaf3de' : pickWrong ? '#fcebeb' : '#fafafa',
                 }}>
-                  <span style={{ fontSize: 12, color: '#666', flex: 1 }}>{m.label}</span>
+                  <span style={{ fontSize: 12, color: '#666', flex: 1 }}>
+                    {FLAGS[m.t1] || ''} {m.t1} vs {FLAGS[m.t2] || ''} {m.t2}
+                  </span>
                   <span style={{ fontSize: 12, fontWeight: 500 }}>{pickLabel}</span>
                   {result && (
                     <span style={{ fontSize: 13, fontWeight: 'bold', color: pickCorrect ? '#3b6d11' : '#a32d2d' }}>
