@@ -1,7 +1,7 @@
 import { useState } from "react";
-import { R32_MATCHES, R16_MATCHES, FLAGS, PARTICIPANTS } from "./data.js";
+import { R32_MATCHES, R16_MATCHES, QF_MATCHES, FLAGS, PARTICIPANTS } from "./data.js";
 import { useScores } from "./useScores.js";
-import { scoreR32, scoreR16, scoreGroups, isFirstTimer } from "./scoring.js";
+import { scoreR32, scoreR16, scoreQF, scoreGroups, isFirstTimer } from "./scoring.js";
 import { s } from "./styles.js";
 import { GroupStandingsView, GroupPicksView } from "./GroupViews.jsx";
 import PlayerDrawer from "./PlayerDrawer.jsx";
@@ -34,6 +34,26 @@ function LiveDot() {
       }}
     />
   );
+}
+
+function Spinner() {
+  return (
+    <div
+      style={{
+        width: 28,
+        height: 28,
+        border: "3px solid #ddd",
+        borderTopColor: "#e53935",
+        borderRadius: "50%",
+        animation: "spin 0.8s linear infinite",
+      }}
+    />
+  );
+}
+
+// live status text: shootout shows PENS, otherwise the match clock
+function liveTime(live) {
+  return live.isPens ? "PENS" : `${live.clock}'`;
 }
 
 
@@ -112,14 +132,16 @@ export default function App() {
       const r32 = scoreR32(p.picks.r32, results);
       const firstTimer = isFirstTimer(p);
       const r16 = scoreR16(p.picks.r16, results, { firstTimer });
+      const qf = scoreQF(p.picks.qf, results);
       const groups = scoreGroups(p.picks.groups, groupStandings).total;
-      return { ...p, r32Pts: r32, r16Pts: r16, firstTimer, groupPts: groups, pts: r32 + r16 + groups };
+      return { ...p, r32Pts: r32, r16Pts: r16, qfPts: qf, firstTimer, groupPts: groups, pts: r32 + r16 + qf + groups };
     })
     .sort((a, b) => b.pts - a.pts || a.name.localeCompare(b.name));
 
   const me = ranked.find((p) => p.name === myName);
+  const firstLoad = loading && !lastUpdated;
 
-  // leaderboard scope: total (default) | groups | r32 | r16
+  // leaderboard scope: total (default) | groups | r32 | r16 | qf
   const scopeVal = (p) =>
     boardScope === "groups"
       ? p.groupPts
@@ -127,7 +149,9 @@ export default function App() {
         ? p.r32Pts
         : boardScope === "r16"
           ? p.r16Pts
-          : p.pts;
+          : boardScope === "qf"
+            ? p.qfPts
+            : p.pts;
   const board = ranked
     .map((p) => ({ ...p, shown: scopeVal(p) }))
     .sort((a, b) => b.shown - a.shown || a.name.localeCompare(b.name));
@@ -135,12 +159,12 @@ export default function App() {
 
   return (
     <div style={s.wrap}>
-      <style>{`@keyframes pulse{0%,100%{opacity:1}50%{opacity:0.3}}`}</style>
+      <style>{`@keyframes pulse{0%,100%{opacity:1}50%{opacity:0.3}}@keyframes spin{to{transform:rotate(360deg)}}`}</style>
 
       <div style={s.header}>
         <h1 style={s.h1}>⚽ ERG World Cup Predictions</h1>
         <p style={s.sub}>
-          #erg-world-cup · Group stage + Round of 32 + Round of 16
+          #erg-world-cup · Groups + R32 + R16 + Quarter-finals
         </p>
       </div>
 
@@ -174,8 +198,26 @@ export default function App() {
         ))}
       </div>
 
+      {/* first-load spinner: only before any scores have arrived */}
+      {firstLoad && (
+        <div
+          style={{
+            display: "flex",
+            flexDirection: "column",
+            alignItems: "center",
+            gap: 12,
+            padding: "48px 0",
+            color: "#666",
+            fontSize: 13,
+          }}
+        >
+          <Spinner />
+          Loading scores…
+        </div>
+      )}
+
       {/* LEADERBOARD */}
-      {tab === "leaderboard" && (
+      {!firstLoad && tab === "leaderboard" && (
         <div>
           <div style={s.roundTabs}>
             {[
@@ -183,6 +225,7 @@ export default function App() {
               ["groups", "Group Stage"],
               ["r32", "Round of 32"],
               ["r16", "Round of 16"],
+              ["qf", "Quarter-finals"],
             ].map(([key, label]) => (
               <button
                 key={key}
@@ -208,7 +251,9 @@ export default function App() {
                       ? " · group stage"
                       : boardScope === "r32"
                         ? " · round of 32"
-                        : " · round of 16"}
+                        : boardScope === "r16"
+                          ? " · round of 16"
+                          : " · quarter-finals"}
                 </div>
               </div>
             </div>
@@ -246,8 +291,8 @@ export default function App() {
                   {isMe ? " (you)" : ""}
                 </span>
                 {boardScope === "total" && (
-                  <span style={{ fontSize: 11, color: "#888", minWidth: 128, textAlign: "right" }}>
-                    G {p.groupPts} · R32 {p.r32Pts} · R16 {p.r16Pts}
+                  <span style={{ fontSize: 11, color: "#888", minWidth: 160, textAlign: "right" }}>
+                    G {p.groupPts} · R32 {p.r32Pts} · R16 {p.r16Pts} · QF {p.qfPts}
                   </span>
                 )}
                 <span
@@ -267,13 +312,14 @@ export default function App() {
       )}
 
       {/* MY PICKS */}
-      {tab === "my picks" && (
+      {!firstLoad && tab === "my picks" && (
         <div>
           <div style={s.roundTabs}>
             {[
               ["groups", "Group Stage", !!me?.picks.groups],
               ["r32", "Round of 32", !!me?.picks.r32],
               ["r16", "Round of 16", !!me?.picks.r16],
+              ["qf", "Quarter-finals", !!me?.picks.qf],
             ].map(([key, label, enabled]) => (
               <button
                 key={key}
@@ -309,7 +355,7 @@ export default function App() {
                 {live && (
                   <span style={{ fontSize: 11, color: "#e53935" }}>
                     <LiveDot />
-                    {live.homeScore}–{live.awayScore} {live.clock}'
+                    {live.homeScore}–{live.awayScore} {liveTime(live)}
                   </span>
                 )}
                 <span style={{ fontSize: 12 }}>
@@ -355,7 +401,7 @@ export default function App() {
                 {live && (
                   <span style={{ fontSize: 11, color: "#e53935" }}>
                     <LiveDot />
-                    {live.homeScore}–{live.awayScore} {live.clock}'
+                    {live.homeScore}–{live.awayScore} {liveTime(live)}
                   </span>
                 )}
                 <span style={{ fontSize: 12 }}>
@@ -383,7 +429,47 @@ export default function App() {
             );
           })}
 
-          {(picksRound === "r32" || picksRound === "r16") && (
+          {picksRound === "qf" &&
+            QF_MATCHES.map((m, i) => {
+            const myPick = me?.picks.qf?.[i];
+            const result = results[m.id];
+            const live = liveScores[m.id];
+            const correct = result && myPick === result.winner;
+            const wrong = result && myPick !== result.winner;
+
+            return (
+              <div key={m.id} style={s.pickRow(correct, wrong)}>
+                <span style={{ fontSize: 12, color: "#666", flex: 1 }}>
+                  {m.label}
+                </span>
+                {live && (
+                  <span style={{ fontSize: 11, color: "#e53935" }}>
+                    <LiveDot />
+                    {live.homeScore}–{live.awayScore} {liveTime(live)}
+                  </span>
+                )}
+                <span style={{ fontSize: 12 }}>
+                  {FLAGS[myPick] || ""} {myPick || "—"}
+                </span>
+                {result && (
+                  <span
+                    style={{
+                      fontSize: 13,
+                      fontWeight: "bold",
+                      color: correct ? "#3b6d11" : "#a32d2d",
+                    }}
+                  >
+                    {correct ? "✓" : "✗"}
+                  </span>
+                )}
+                {!result && !live && (
+                  <span style={{ fontSize: 11, color: "#ccc" }}>pending</span>
+                )}
+              </div>
+            );
+          })}
+
+          {(picksRound === "r32" || picksRound === "r16" || picksRound === "qf") && (
             <div
               style={{
                 marginTop: 8,
@@ -395,7 +481,7 @@ export default function App() {
               }}
             >
               <span style={{ fontSize: 12, color: "#888" }}>
-                Total {picksRound === "r16" ? "R16" : "R32"} points
+                Total {picksRound === "qf" ? "QF" : picksRound === "r16" ? "R16" : "R32"} points
                 {picksRound === "r16" && me?.firstTimer && (
                   <span style={{ color: "#3b6d11", fontWeight: 600 }}>
                     {" "}· first-timer: 2× if all 4 correct
@@ -403,7 +489,7 @@ export default function App() {
                 )}
               </span>
               <span style={{ fontSize: 14, fontWeight: 600 }}>
-                {(picksRound === "r16" ? me?.r16Pts : me?.r32Pts) ?? 0} pts
+                {(picksRound === "qf" ? me?.qfPts : picksRound === "r16" ? me?.r16Pts : me?.r32Pts) ?? 0} pts
               </span>
             </div>
           )}
@@ -411,14 +497,14 @@ export default function App() {
       )}
 
       {/* RESULTS */}
-      {tab === "results" && (
+      {!firstLoad && tab === "results" && (
         <div>
           <div style={s.roundTabs}>
             {[
               ["groups", "Groups", true],
               ["r32", "R32", true],
               ["r16", "R16", true],
-              ["qf", "QF", false],
+              ["qf", "QF", true],
               ["sf", "SF", false],
               ["final", "Final", false],
             ].map(([key, label, enabled]) => (
@@ -437,19 +523,24 @@ export default function App() {
             <GroupStandingsView standings={groupStandings} />
           )}
 
-          {["qf", "sf", "final"].includes(resultsRound) && (
+          {["sf", "final"].includes(resultsRound) && (
             <div style={{ fontSize: 13, color: "#aaa", padding: "16px 2px", textAlign: "center" }}>
               Not started yet — picks &amp; results appear here once this round begins.
             </div>
           )}
 
-          {(resultsRound === "r32" || resultsRound === "r16") && (
+          {(resultsRound === "r32" || resultsRound === "r16" || resultsRound === "qf") && (
           <div>
           <p style={{ fontSize: 12, color: "#888", margin: "0 0 10px" }}>
             Results are fetched automatically from ESPN. Use buttons to manually
             override if needed.
           </p>
-          {(resultsRound === "r16" ? R16_MATCHES : R32_MATCHES).map((m) => {
+          {(resultsRound === "qf"
+            ? QF_MATCHES
+            : resultsRound === "r16"
+              ? R16_MATCHES
+              : R32_MATCHES
+          ).map((m) => {
             const result = results[m.id];
             const live = liveScores[m.id];
             const status = live ? "live" : result ? "final" : "pending";
@@ -474,7 +565,7 @@ export default function App() {
                       }}
                     >
                       <LiveDot />
-                      {live.homeScore}–{live.awayScore} {live.clock}'
+                      {live.homeScore}–{live.awayScore} {liveTime(live)}
                     </span>
                   )}
                   {status === "final" && (
@@ -491,7 +582,14 @@ export default function App() {
                       {result.manual
                         ? "set manually"
                         : `${result.homeScore}–${result.awayScore}${
-                            result.isPens ? " (P)" : result.isAET ? " (AET)" : ""
+                            result.isPens
+                              ? result.homeShootout != null &&
+                                result.awayShootout != null
+                                ? ` (${result.homeShootout}–${result.awayShootout} P)`
+                                : " (P)"
+                              : result.isAET
+                                ? " (AET)"
+                                : ""
                           } FT`}
                     </span>
                   )}
@@ -527,7 +625,7 @@ export default function App() {
       )}
 
       {/* ANALYTICS */}
-      {tab === "analytics" && (
+      {!firstLoad && tab === "analytics" && (
         <Analytics
           participants={PARTICIPANTS}
           ranked={ranked}
@@ -538,7 +636,7 @@ export default function App() {
       )}
 
       {/* ABOUT */}
-      {tab === "about" && (
+      {!firstLoad && tab === "about" && (
         <div style={{ fontSize: 13, lineHeight: 1.55, color: "#333" }}>
           <img
             src="/erg-world-cup-hype.png"
