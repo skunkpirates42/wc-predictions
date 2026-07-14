@@ -512,7 +512,7 @@ export const PARTICIPANTS = [
   {
     name: "Juan Moreno",
     picks: {
-      sf: ["France", null],
+      sf: ["France", "Argentina"],
       qf: ["France", "Spain", "Norway", "Argentina"],
       r32: ["Japan", "Germany", "Netherlands", "Cote d'Ivoire", "France", "Mexico", "England", "Belgium", "USA", "Spain", "Portugal", "Switzerland", "Australia", "Cabo Verde", "Colombia"],
       r16: ["Spain", "USA", "Argentina", "Colombia", "England", "Norway", "Morocco", "France"],
