@@ -1,5 +1,5 @@
 import { useState } from "react";
-import { FLAGS, GROUP_LETTERS, R32_MATCHES, R16_MATCHES, QF_MATCHES } from "./data.js";
+import { FLAGS, GROUP_LETTERS, R32_MATCHES, R16_MATCHES, QF_MATCHES, SF_MATCHES } from "./data.js";
 import { s } from "./styles.js";
 import { GroupPicksView } from "./GroupViews.jsx";
 
@@ -16,17 +16,20 @@ export default function PlayerDrawer({ player, me, results, groupStandings, onCl
     r32: !!player.picks.r32,
     r16: !!player.picks.r16,
     qf: !!player.picks.qf,
+    sf: !!player.picks.sf,
   };
   const activeRound = has[round]
     ? round
-    : ["groups", "r32", "r16", "qf"].find((r) => has[r]) || round;
+    : ["groups", "r32", "r16", "qf", "sf"].find((r) => has[r]) || round;
   const bracketMatches =
-    activeRound === "qf"
-      ? QF_MATCHES
-      : activeRound === "r16"
-        ? R16_MATCHES
-        : R32_MATCHES;
-  const bracketKey = activeRound === "qf" ? "qf" : activeRound === "r16" ? "r16" : "r32";
+    activeRound === "sf"
+      ? SF_MATCHES
+      : activeRound === "qf"
+        ? QF_MATCHES
+        : activeRound === "r16"
+          ? R16_MATCHES
+          : R32_MATCHES;
+  const bracketKey = activeRound === "sf" ? "sf" : activeRound === "qf" ? "qf" : activeRound === "r16" ? "r16" : "r32";
 
   return (
     <div style={{
@@ -73,6 +76,7 @@ export default function PlayerDrawer({ player, me, results, groupStandings, onCl
             ["r32", "Round of 32", !!player.picks.r32],
             ["r16", "Round of 16", !!player.picks.r16],
             ["qf", "Quarter-finals", !!player.picks.qf],
+            ["sf", "Semi-finals", !!player.picks.sf],
           ].map(([key, label, enabled]) => (
             <button
               key={key}
@@ -85,8 +89,8 @@ export default function PlayerDrawer({ player, me, results, groupStandings, onCl
           ))}
         </div>
 
-        {/* R32 / R16 bracket */}
-        {(activeRound === "r32" || activeRound === "r16" || activeRound === "qf") && (
+        {/* R32 / R16 / QF / SF bracket */}
+        {(activeRound === "r32" || activeRound === "r16" || activeRound === "qf" || activeRound === "sf") && (
           <>
             {showCompare && (
               <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr 1fr', gap: 4, marginBottom: 6 }}>

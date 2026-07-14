@@ -1,4 +1,4 @@
-import { GROUPS, R16_MATCHES, QF_MATCHES } from "./data.js";
+import { GROUPS, R16_MATCHES, QF_MATCHES, SF_MATCHES } from "./data.js";
 
 const POINTS = 10;
 
@@ -56,6 +56,17 @@ export function scoreQF(qfPicks, results) {
   }, 0);
 }
 
+// SF: +50 per correct winner pick, index-aligned to SF_MATCHES. No free
+// matches, no first-timer bonus — straight knockout scoring.
+export function scoreSF(sfPicks, results) {
+  if (!sfPicks) return 0;
+  return SF_MATCHES.reduce((pts, m, i) => {
+    const res = results[m.id];
+    if (!res?.winner) return pts;
+    return pts + (sfPicks[i] === res.winner ? 50 : 0);
+  }, 0);
+}
+
 // Groups: +10 per team in its exact final slot. Only complete groups are scored.
 // standings keyed by group letter -> { order: [1st,2nd,3rd,4th], complete: bool }.
 export function scoreGroups(groupPicks, standings) {
@@ -80,6 +91,7 @@ export function scoreTotal(participant, { results, standings }) {
   const r32 = scoreR32(participant.picks.r32, results);
   const r16 = scoreR16(participant.picks.r16, results, { firstTimer: isFirstTimer(participant) });
   const qf = scoreQF(participant.picks.qf, results);
+  const sf = scoreSF(participant.picks.sf, results);
   const groups = scoreGroups(participant.picks.groups, standings).total;
-  return { r32, r16, qf, groups, total: r32 + r16 + qf + groups };
+  return { r32, r16, qf, sf, groups, total: r32 + r16 + qf + sf + groups };
 }

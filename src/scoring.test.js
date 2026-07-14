@@ -112,7 +112,7 @@ test("scoreQF scores +10 per correct winner, index-aligned to QF_MATCHES", () =>
   assert.equal(scoreQF(null, results), 0);
 });
 
-test("scoreTotal sums both rounds", () => {
+test("scoreTotal sums all rounds", () => {
   const p = {
     picks: {
       r32: ["Brazil"],
@@ -120,5 +120,5 @@ test("scoreTotal sums both rounds", () => {
     },
   };
   const res = scoreTotal(p, { results: { 0: { winner: "Brazil" } }, standings });
-  assert.deepEqual(res, { r32: 10, r16: 0, qf: 0, groups: 40, total: 50 });
+  assert.deepEqual(res, { r32: 10, r16: 0, qf: 0, sf: 0, groups: 40, total: 50 });
 });
