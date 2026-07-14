@@ -1,5 +1,5 @@
 import { GROUPS, MATCHES } from "./data.js";
-import { scoreGroups, scoreR32, scoreR16, isFirstTimer } from "./scoring.js";
+import { scoreGroups, scoreR32, scoreR16, scoreQF, scoreSF, isFirstTimer } from "./scoring.js";
 
 // result id -> { round, idx (position within that round's pick array), free }
 const MATCH_BY_ID = {};
@@ -46,7 +46,9 @@ export function buildTimeline(participants, results, standings) {
       return (
         scoreGroups(p.picks.groups, stUpTo).total +
         scoreR32(p.picks.r32, resUpTo) +
-        scoreR16(p.picks.r16, resUpTo, { firstTimer: isFirstTimer(p) })
+        scoreR16(p.picks.r16, resUpTo, { firstTimer: isFirstTimer(p) }) +
+        scoreQF(p.picks.qf, resUpTo) +
+        scoreSF(p.picks.sf, resUpTo)
       );
     });
     return { name: p.name, cum, rank: [] };
@@ -75,10 +77,14 @@ export function accuracyByRound(participant, participants, results, standings) {
 
   const r32Total = decided("r32").length;
   const r16Total = decided("r16").length;
+  const qfTotal = decided("qf").length;
+  const sfTotal = decided("sf").length;
   const groupTotal = Object.values(standings).filter((s) => s?.complete).length * 4;
 
   const withR32 = participants.filter((p) => p.picks.r32);
   const withR16 = participants.filter((p) => p.picks.r16);
+  const withQF = participants.filter((p) => p.picks.qf);
+  const withSF = participants.filter((p) => p.picks.sf);
   const withGroups = participants.filter((p) => p.picks.groups);
   const avg = (arr, f) => (arr.length ? arr.reduce((s, p) => s + f(p), 0) / arr.length : 0);
 
@@ -92,6 +98,16 @@ export function accuracyByRound(participant, participants, results, standings) {
       you: bracketCorrect(participant, "r16"),
       avg: avg(withR16, (p) => bracketCorrect(p, "r16")),
       total: r16Total,
+    },
+    qf: {
+      you: bracketCorrect(participant, "qf"),
+      avg: avg(withQF, (p) => bracketCorrect(p, "qf")),
+      total: qfTotal,
+    },
+    sf: {
+      you: bracketCorrect(participant, "sf"),
+      avg: avg(withSF, (p) => bracketCorrect(p, "sf")),
+      total: sfTotal,
     },
     groups: {
       you: groupCorrect(participant.picks.groups),

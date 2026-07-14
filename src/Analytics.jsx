@@ -158,6 +158,8 @@ function AccuracyChart({ acc }) {
     { key: "groups", label: "Group Stage", d: acc.groups },
     { key: "r32", label: "Round of 32", d: acc.r32 },
     { key: "r16", label: "Round of 16", d: acc.r16 },
+    { key: "qf", label: "Quarter-finals", d: acc.qf },
+    { key: "sf", label: "Semi-finals", d: acc.sf },
   ].filter((r) => r.d.total > 0);
   if (!rounds.length) return null;
   const pct = (c, t) => (t ? Math.round((c / t) * 100) : 0);
