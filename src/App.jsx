@@ -570,23 +570,25 @@ export default function App() {
             <GroupStandingsView standings={groupStandings} />
           )}
 
-          {["sf", "final"].includes(resultsRound) && (
+          {resultsRound === "final" && (
             <div style={{ fontSize: 13, color: "#aaa", padding: "16px 2px", textAlign: "center" }}>
               Not started yet — picks &amp; results appear here once this round begins.
             </div>
           )}
 
-          {(resultsRound === "r32" || resultsRound === "r16" || resultsRound === "qf") && (
+          {(resultsRound === "r32" || resultsRound === "r16" || resultsRound === "qf" || resultsRound === "sf") && (
           <div>
           <p style={{ fontSize: 12, color: "#888", margin: "0 0 10px" }}>
             Results are fetched automatically from ESPN. Use buttons to manually
             override if needed.
           </p>
-          {(resultsRound === "qf"
-            ? QF_MATCHES
-            : resultsRound === "r16"
-              ? R16_MATCHES
-              : R32_MATCHES
+          {(resultsRound === "sf"
+            ? SF_MATCHES
+            : resultsRound === "qf"
+              ? QF_MATCHES
+              : resultsRound === "r16"
+                ? R16_MATCHES
+                : R32_MATCHES
           ).map((m) => {
             const result = results[m.id];
             const live = liveScores[m.id];
