@@ -214,10 +214,10 @@ function BreakdownChart({ you, participants }) {
   const withAny = participants;
   const avg = (f) => (withAny.length ? withAny.reduce((s, p) => s + f(p), 0) / withAny.length : 0);
   const rows = [
-    { who: "You", g: you.groupPts, r: you.r32Pts, s: you.r16Pts, bold: true },
-    { who: "Field avg", g: avg((p) => p.groupPts), r: avg((p) => p.r32Pts), s: avg((p) => p.r16Pts) },
+    { who: "You", g: you.groupPts, r: you.r32Pts, s: you.r16Pts, q: you.qfPts, f: you.sfPts, bold: true },
+    { who: "Field avg", g: avg((p) => p.groupPts), r: avg((p) => p.r32Pts), s: avg((p) => p.r16Pts), q: avg((p) => p.qfPts), f: avg((p) => p.sfPts) },
   ];
-  const max = Math.max(...rows.map((x) => x.g + x.r + x.s), 1);
+  const max = Math.max(...rows.map((x) => x.g + x.r + x.s + x.q + x.f), 1);
   return (
     <div style={{ marginBottom: 8 }}>
       <div style={{ fontSize: 13, fontWeight: 600, marginBottom: 6 }}>
@@ -229,7 +229,7 @@ function BreakdownChart({ you, participants }) {
             <div style={{ display: "flex", justifyContent: "space-between", fontSize: 11, color: "#52514e", marginBottom: 3 }}>
               <span style={{ fontWeight: x.bold ? 700 : 400 }}>{x.who}</span>
               <span style={{ fontVariantNumeric: "tabular-nums" }}>
-                {Math.round(x.g + x.r + x.s)} pts
+                {Math.round(x.g + x.r + x.s + x.q + x.f)} pts
               </span>
             </div>
             <div style={{ display: "flex", height: 18, borderRadius: 5, overflow: "hidden", background: GHOST }}>
@@ -238,6 +238,10 @@ function BreakdownChart({ you, participants }) {
               <div style={{ width: `${(x.r / max) * 100}%`, background: HUES[0] }} title={`R32 ${Math.round(x.r)}`} />
               <div style={{ width: "2px", background: "#fff" }} />
               <div style={{ width: `${(x.s / max) * 100}%`, background: HUES[2] }} title={`R16 ${Math.round(x.s)}`} />
+              <div style={{ width: "2px", background: "#fff" }} />
+              <div style={{ width: `${(x.q / max) * 100}%`, background: HUES[3] }} title={`QF ${Math.round(x.q)}`} />
+              <div style={{ width: "2px", background: "#fff" }} />
+              <div style={{ width: `${(x.f / max) * 100}%`, background: HUES[4] }} title={`SF ${Math.round(x.f)}`} />
             </div>
           </div>
         ))}
@@ -246,6 +250,8 @@ function BreakdownChart({ you, participants }) {
         <LegendItem color={HUES[1]} label="Group stage" />
         <LegendItem color={HUES[0]} label="Round of 32" />
         <LegendItem color={HUES[2]} label="Round of 16" />
+        <LegendItem color={HUES[3]} label="Quarter-finals" />
+        <LegendItem color={HUES[4]} label="Semi-finals" />
       </div>
     </div>
   );
