@@ -13,8 +13,8 @@ const R16_DATES = ["20260705", "20260706", "20260707", "20260708"];
 const QF_DATES = ["20260709", "20260710", "20260711"];
 // Semi-finals: Jul 14-15.
 const SF_DATES = ["20260714", "20260715"];
-// 3rd place: Jul 17. Final: Jul 19.
-const FINAL_DATES = ["20260717", "20260719"];
+// 3rd place: Jul 18. Final: Jul 19.
+const FINAL_DATES = ["20260718", "20260719"];
 const ALL_DATES = [...GROUP_DATES, ...R32_DATES, ...R16_DATES, ...QF_DATES, ...SF_DATES, ...FINAL_DATES];
 
 const FINALS_KEY = "finals"; // map of event id -> raw ESPN event (immutable once post)

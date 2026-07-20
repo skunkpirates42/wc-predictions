@@ -1,5 +1,5 @@
 import { useState } from "react";
-import { FLAGS, GROUP_LETTERS, R32_MATCHES, R16_MATCHES, QF_MATCHES, SF_MATCHES } from "./data.js";
+import { FLAGS, GROUP_LETTERS, R32_MATCHES, R16_MATCHES, QF_MATCHES, SF_MATCHES, THIRD_PLACE_MATCH, FINAL_MATCH } from "./data.js";
 import { s } from "./styles.js";
 import { GroupPicksView } from "./GroupViews.jsx";
 
@@ -17,10 +17,11 @@ export default function PlayerDrawer({ player, me, results, groupStandings, onCl
     r16: !!player.picks.r16,
     qf: !!player.picks.qf,
     sf: !!player.picks.sf,
+    final: !!(player.picks.final || player.picks.thirdPlace),
   };
   const activeRound = has[round]
     ? round
-    : ["groups", "r32", "r16", "qf", "sf"].find((r) => has[r]) || round;
+    : ["groups", "r32", "r16", "qf", "sf", "final"].find((r) => has[r]) || round;
   const bracketMatches =
     activeRound === "sf"
       ? SF_MATCHES
@@ -77,6 +78,7 @@ export default function PlayerDrawer({ player, me, results, groupStandings, onCl
             ["r16", "Round of 16", !!player.picks.r16],
             ["qf", "Quarter-finals", !!player.picks.qf],
             ["sf", "Semi-finals", !!player.picks.sf],
+            ["final", "Finals", has.final],
           ].map(([key, label, enabled]) => (
             <button
               key={key}
@@ -144,6 +146,67 @@ export default function PlayerDrawer({ player, me, results, groupStandings, onCl
                     {FLAGS[m.t1] || ''} {m.t1} vs {FLAGS[m.t2] || ''} {m.t2}
                   </span>
                   <span style={{ fontSize: 12, fontWeight: 500 }}>{pickLabel}</span>
+                  {result && (
+                    <span style={{ fontSize: 13, fontWeight: 'bold', color: pickCorrect ? '#3b6d11' : '#a32d2d' }}>
+                      {pickCorrect ? '✓' : '✗'}
+                    </span>
+                  )}
+                  {!result && <span style={{ fontSize: 11, color: '#ccc' }}>pending</span>}
+                </div>
+              );
+            })}
+          </>
+        )}
+
+        {/* Finals: 3rd place + final */}
+        {activeRound === "final" && (
+          <>
+            {showCompare && (
+              <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr 1fr', gap: 4, marginBottom: 6 }}>
+                <div style={{ fontSize: 11, color: '#888' }}>Match</div>
+                <div style={{ fontSize: 11, color: '#888', textAlign: 'center' }}>{player.name.split(' ')[0]}</div>
+                <div style={{ fontSize: 11, color: '#888', textAlign: 'center' }}>{me.name.split(' ')[0]} (you)</div>
+              </div>
+            )}
+            {[
+              { m: THIRD_PLACE_MATCH, label: "3rd Place Match", pick: player.picks.thirdPlace, mePick: me?.picks.thirdPlace },
+              { m: FINAL_MATCH, label: "World Cup Final", pick: player.picks.final, mePick: me?.picks.final },
+            ].map(({ m, label, pick, mePick }) => {
+              const result = results[m.id]?.winner;
+              const pickCorrect = result && pick && pick === result;
+              const pickWrong = result && pick && pick !== result;
+              const meCorrect = result && mePick && mePick === result;
+              const meWrong = result && mePick && mePick !== result;
+              const agree = pick && mePick && pick === mePick;
+              const withFlag = (t) => (t && FLAGS[t] ? `${FLAGS[t]} ${t}` : t || '—');
+
+              if (showCompare) {
+                return (
+                  <div key={label} style={{
+                    display: 'grid', gridTemplateColumns: '1fr 1fr 1fr',
+                    gap: 4, padding: '7px 0', borderBottom: '0.5px solid #f0f0f0',
+                  }}>
+                    <div style={{ fontSize: 12, color: '#666' }}>{label}</div>
+                    <div style={{ fontSize: 12, textAlign: 'center', fontWeight: 500,
+                      color: pickCorrect ? '#3b6d11' : pickWrong ? '#a32d2d' : '#333' }}>
+                      {withFlag(pick)} {pickCorrect ? '✓' : pickWrong ? '✗' : ''}
+                    </div>
+                    <div style={{ fontSize: 12, textAlign: 'center', fontWeight: 500,
+                      color: meCorrect ? '#3b6d11' : meWrong ? '#a32d2d' : '#333',
+                      background: agree ? '#fffbe6' : 'transparent', borderRadius: 4 }}>
+                      {withFlag(mePick)} {meCorrect ? '✓' : meWrong ? '✗' : ''}
+                    </div>
+                  </div>
+                );
+              }
+              return (
+                <div key={label} style={{
+                  display: 'flex', alignItems: 'center', gap: 8,
+                  padding: '7px 10px', marginBottom: 4, borderRadius: 8,
+                  background: pickCorrect ? '#eaf3de' : pickWrong ? '#fcebeb' : '#fafafa',
+                }}>
+                  <span style={{ fontSize: 12, color: '#666', flex: 1 }}>{label}</span>
+                  <span style={{ fontSize: 12, fontWeight: 500 }}>{withFlag(pick)}</span>
                   {result && (
                     <span style={{ fontSize: 13, fontWeight: 'bold', color: pickCorrect ? '#3b6d11' : '#a32d2d' }}>
                       {pickCorrect ? '✓' : '✗'}

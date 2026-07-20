@@ -120,5 +120,5 @@ test("scoreTotal sums all rounds", () => {
     },
   };
   const res = scoreTotal(p, { results: { 0: { winner: "Brazil" } }, standings });
-  assert.deepEqual(res, { r32: 10, r16: 0, qf: 0, sf: 0, groups: 40, total: 50 });
+  assert.deepEqual(res, { r32: 10, r16: 0, qf: 0, sf: 0, groups: 40, thirdPlace: 0, final: 0, total: 50 });
 });
