@@ -1,5 +1,5 @@
 import { GROUPS, MATCHES } from "./data.js";
-import { scoreGroups, scoreR32, scoreR16, scoreQF, scoreSF, isFirstTimer } from "./scoring.js";
+import { scoreGroups, scoreR32, scoreR16, scoreQF, scoreSF, scoreThirdPlace, scoreFinal, isFirstTimer } from "./scoring.js";
 
 // result id -> { round, idx (position within that round's pick array), free }
 const MATCH_BY_ID = {};
@@ -48,7 +48,9 @@ export function buildTimeline(participants, results, standings) {
         scoreR32(p.picks.r32, resUpTo) +
         scoreR16(p.picks.r16, resUpTo, { firstTimer: isFirstTimer(p) }) +
         scoreQF(p.picks.qf, resUpTo) +
-        scoreSF(p.picks.sf, resUpTo)
+        scoreSF(p.picks.sf, resUpTo) +
+        scoreThirdPlace(p.picks.thirdPlace, resUpTo) +
+        scoreFinal(p.picks.final, resUpTo)
       );
     });
     return { name: p.name, cum, rank: [] };

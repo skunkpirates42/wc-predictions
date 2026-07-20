@@ -1,4 +1,4 @@
-import { GROUPS, R16_MATCHES, QF_MATCHES, SF_MATCHES } from "./data.js";
+import { GROUPS, R16_MATCHES, QF_MATCHES, SF_MATCHES, THIRD_PLACE_MATCH, FINAL_MATCH } from "./data.js";
 
 const POINTS = 10;
 
@@ -67,6 +67,22 @@ export function scoreSF(sfPicks, results) {
   }, 0);
 }
 
+// 3rd place: +50 for correct pick.
+export function scoreThirdPlace(thirdPlacePick, results) {
+  if (!thirdPlacePick) return 0;
+  const res = results[THIRD_PLACE_MATCH.id];
+  if (!res?.winner) return 0;
+  return thirdPlacePick === res.winner ? 50 : 0;
+}
+
+// Final: +100 for correct pick.
+export function scoreFinal(finalPick, results) {
+  if (!finalPick) return 0;
+  const res = results[FINAL_MATCH.id];
+  if (!res?.winner) return 0;
+  return finalPick === res.winner ? 100 : 0;
+}
+
 // Groups: +10 per team in its exact final slot. Only complete groups are scored.
 // standings keyed by group letter -> { order: [1st,2nd,3rd,4th], complete: bool }.
 export function scoreGroups(groupPicks, standings) {
@@ -93,5 +109,7 @@ export function scoreTotal(participant, { results, standings }) {
   const qf = scoreQF(participant.picks.qf, results);
   const sf = scoreSF(participant.picks.sf, results);
   const groups = scoreGroups(participant.picks.groups, standings).total;
-  return { r32, r16, qf, sf, groups, total: r32 + r16 + qf + sf + groups };
+  const thirdPlace = scoreThirdPlace(participant.picks.thirdPlace, results);
+  const final = scoreFinal(participant.picks.final, results);
+  return { r32, r16, qf, sf, groups, thirdPlace, final, total: r32 + r16 + qf + sf + groups + thirdPlace + final };
 }

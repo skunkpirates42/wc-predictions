@@ -49,7 +49,7 @@ export default function PlayerDrawer({ player, me, results, groupStandings, onCl
           <div style={{ flex: 1 }}>
             <div style={{ fontSize: 16, fontWeight: 600 }}>{player.name}</div>
             <div style={{ fontSize: 12, color: '#888' }}>
-              {player.pts} pts · G {player.groupPts ?? 0} · R32 {player.r32Pts ?? 0} · R16 {player.r16Pts ?? 0} · QF {player.qfPts ?? 0}
+              {player.pts} pts · G {player.groupPts ?? 0} · R32 {player.r32Pts ?? 0} · R16 {player.r16Pts ?? 0} · QF {player.qfPts ?? 0} · SF {player.sfPts ?? 0} · 3P {player.thirdPlacePts ?? 0} · F {player.finalPts ?? 0}
             </div>
           </div>
           {isOther && (
