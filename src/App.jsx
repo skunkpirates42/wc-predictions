@@ -1,7 +1,7 @@
 import { useState } from "react";
-import { R32_MATCHES, R16_MATCHES, QF_MATCHES, SF_MATCHES, FLAGS, PARTICIPANTS } from "./data.js";
+import { R32_MATCHES, R16_MATCHES, QF_MATCHES, SF_MATCHES, THIRD_PLACE_MATCH, FINAL_MATCH, FLAGS, PARTICIPANTS } from "./data.js";
 import { useScores } from "./useScores.js";
-import { scoreR32, scoreR16, scoreQF, scoreSF, scoreGroups, isFirstTimer } from "./scoring.js";
+import { scoreR32, scoreR16, scoreQF, scoreSF, scoreGroups, scoreThirdPlace, scoreFinal, isFirstTimer } from "./scoring.js";
 import { s } from "./styles.js";
 import { GroupStandingsView, GroupPicksView } from "./GroupViews.jsx";
 import PlayerDrawer from "./PlayerDrawer.jsx";
@@ -135,14 +135,16 @@ export default function App() {
       const qf = scoreQF(p.picks.qf, results);
       const sf = scoreSF(p.picks.sf, results);
       const groups = scoreGroups(p.picks.groups, groupStandings).total;
-      return { ...p, r32Pts: r32, r16Pts: r16, qfPts: qf, sfPts: sf, firstTimer, groupPts: groups, pts: r32 + r16 + qf + sf + groups };
+      const thirdPlace = scoreThirdPlace(p.picks.thirdPlace, results);
+      const final = scoreFinal(p.picks.final, results);
+      return { ...p, r32Pts: r32, r16Pts: r16, qfPts: qf, sfPts: sf, firstTimer, groupPts: groups, thirdPlacePts: thirdPlace, finalPts: final, pts: r32 + r16 + qf + sf + groups + thirdPlace + final };
     })
     .sort((a, b) => b.pts - a.pts || a.name.localeCompare(b.name));
 
   const me = ranked.find((p) => p.name === myName);
   const firstLoad = loading && !lastUpdated;
 
-  // leaderboard scope: total (default) | groups | r32 | r16 | qf | sf
+  // leaderboard scope: total (default) | groups | r32 | r16 | qf | sf | thirdPlace | final
   const scopeVal = (p) =>
     boardScope === "groups"
       ? p.groupPts
@@ -154,7 +156,11 @@ export default function App() {
             ? p.qfPts
             : boardScope === "sf"
               ? p.sfPts
-              : p.pts;
+              : boardScope === "thirdPlace"
+                ? p.thirdPlacePts
+                : boardScope === "final"
+                  ? p.finalPts
+                  : p.pts;
   const board = ranked
     .map((p) => ({ ...p, shown: scopeVal(p) }))
     .sort((a, b) => b.shown - a.shown || a.name.localeCompare(b.name));
@@ -167,7 +173,7 @@ export default function App() {
       <div style={s.header}>
         <h1 style={s.h1}>⚽ ERG World Cup Predictions</h1>
         <p style={s.sub}>
-          #erg-world-cup · Groups + R32 + R16 + Quarter-finals
+          #erg-world-cup · Groups + R32 + R16 + QF + SF + Final
         </p>
       </div>
 
@@ -230,6 +236,8 @@ export default function App() {
               ["r16", "Round of 16"],
               ["qf", "Quarter-finals"],
               ["sf", "Semi-finals"],
+              ["thirdPlace", "3rd Place"],
+              ["final", "Final"],
             ].map(([key, label]) => (
               <button
                 key={key}
@@ -259,7 +267,11 @@ export default function App() {
                           ? " · round of 16"
                           : boardScope === "qf"
                             ? " · quarter-finals"
-                            : " · semi-finals"}
+                            : boardScope === "sf"
+                              ? " · semi-finals"
+                              : boardScope === "thirdPlace"
+                                ? " · 3rd place"
+                                : " · final"}
                 </div>
               </div>
             </div>
@@ -298,7 +310,7 @@ export default function App() {
                 </span>
                 {boardScope === "total" && (
                   <span style={{ fontSize: 11, color: "#888", minWidth: 160, textAlign: "right" }}>
-                    G {p.groupPts} · R32 {p.r32Pts} · R16 {p.r16Pts} · QF {p.qfPts} · SF {p.sfPts}
+                    G {p.groupPts} · R32 {p.r32Pts} · R16 {p.r16Pts} · QF {p.qfPts} · SF {p.sfPts} · 3P {p.thirdPlacePts} · F {p.finalPts}
                   </span>
                 )}
                 <span
@@ -327,6 +339,7 @@ export default function App() {
               ["r16", "Round of 16", !!me?.picks.r16],
               ["qf", "Quarter-finals", !!me?.picks.qf],
               ["sf", "Semi-finals", !!me?.picks.sf],
+              ["final", "Finals", !!(me?.picks.final || me?.picks.thirdPlace)],
             ].map(([key, label, enabled]) => (
               <button
                 key={key}
@@ -516,6 +529,43 @@ export default function App() {
             );
           })}
 
+          {picksRound === "final" && (() => {
+            const tp = me?.picks.thirdPlace;
+            const fp = me?.picks.final;
+            const tpResult = results[THIRD_PLACE_MATCH.id];
+            const fpResult = results[FINAL_MATCH.id];
+            return (
+              <div>
+                {[
+                  { label: "3rd Place Match", pick: tp, result: tpResult, pts: 50 },
+                  { label: "World Cup Final", pick: fp, result: fpResult, pts: 100 },
+                ].map(({ label, pick, result, pts }) => {
+                  const correct = result?.winner && pick === result.winner;
+                  const wrong = result?.winner && pick && pick !== result.winner;
+                  return (
+                    <div key={label} style={s.pickRow(correct, wrong)}>
+                      <span style={{ fontSize: 12, color: "#666", flex: 1 }}>{label}</span>
+                      <span style={{ fontSize: 11, color: "#888" }}>+{pts} pts</span>
+                      <span style={{ fontSize: 12 }}>
+                        {FLAGS[pick] || ""} {pick || "—"}
+                      </span>
+                      {result?.winner && (
+                        <span style={{ fontSize: 13, fontWeight: "bold", color: correct ? "#3b6d11" : "#a32d2d" }}>
+                          {correct ? "✓" : "✗"}
+                        </span>
+                      )}
+                      {!result && <span style={{ fontSize: 11, color: "#ccc" }}>pending</span>}
+                    </div>
+                  );
+                })}
+                <div style={{ marginTop: 8, padding: "10px 12px", background: "#f7f7f5", borderRadius: 8, display: "flex", justifyContent: "space-between" }}>
+                  <span style={{ fontSize: 12, color: "#888" }}>Total Finals points</span>
+                  <span style={{ fontSize: 14, fontWeight: 600 }}>{(me?.thirdPlacePts ?? 0) + (me?.finalPts ?? 0)} pts</span>
+                </div>
+              </div>
+            );
+          })()}
+
           {(picksRound === "r32" || picksRound === "r16" || picksRound === "qf" || picksRound === "sf") && (
             <div
               style={{
@@ -553,7 +603,8 @@ export default function App() {
               ["r16", "R16", true],
               ["qf", "QF", true],
               ["sf", "SF", true],
-              ["final", "Final", false],
+              ["3p", "3rd Place", true],
+              ["final", "Final", true],
             ].map(([key, label, enabled]) => (
               <button
                 key={key}
@@ -570,25 +621,23 @@ export default function App() {
             <GroupStandingsView standings={groupStandings} />
           )}
 
-          {resultsRound === "final" && (
-            <div style={{ fontSize: 13, color: "#aaa", padding: "16px 2px", textAlign: "center" }}>
-              Not started yet — picks &amp; results appear here once this round begins.
-            </div>
-          )}
-
-          {(resultsRound === "r32" || resultsRound === "r16" || resultsRound === "qf" || resultsRound === "sf") && (
+          {(resultsRound === "r32" || resultsRound === "r16" || resultsRound === "qf" || resultsRound === "sf" || resultsRound === "3p" || resultsRound === "final") && (
           <div>
           <p style={{ fontSize: 12, color: "#888", margin: "0 0 10px" }}>
             Results are fetched automatically from ESPN. Use buttons to manually
             override if needed.
           </p>
-          {(resultsRound === "sf"
-            ? SF_MATCHES
-            : resultsRound === "qf"
-              ? QF_MATCHES
-              : resultsRound === "r16"
-                ? R16_MATCHES
-                : R32_MATCHES
+          {(resultsRound === "final"
+            ? [FINAL_MATCH]
+            : resultsRound === "3p"
+              ? [THIRD_PLACE_MATCH]
+              : resultsRound === "sf"
+                ? SF_MATCHES
+                : resultsRound === "qf"
+                  ? QF_MATCHES
+                  : resultsRound === "r16"
+                    ? R16_MATCHES
+                    : R32_MATCHES
           ).map((m) => {
             const result = results[m.id];
             const live = liveScores[m.id];
